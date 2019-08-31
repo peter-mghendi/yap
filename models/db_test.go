@@ -72,7 +72,7 @@ func TestInitDB(t *testing.T) {
 		{
 			name:    "REAL DB Connect Test",
 			args:    args{url: os.Getenv("DATABASE_URL")},
-			wantErr: true,
+			wantErr: false,
 		},
 	}
 	for _, tt := range tests {

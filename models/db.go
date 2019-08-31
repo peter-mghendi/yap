@@ -33,6 +33,6 @@ func InitDB(url string) error {
 	}
 
 	DB = conn
-	// DB.Debug().AutoMigrate() // TODO
+	DB.Debug().AutoMigrate(&User{}, &Article{}, &Gallery{}, &Flicker{}, &Reaction{})
 	return nil
 }

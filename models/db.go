@@ -1,6 +1,7 @@
 package models
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/jinzhu/gorm"
@@ -17,7 +18,15 @@ func parseDBURL(url string) (string, string, error) {
 		return "", "", err
 	}
 
-	return u.Driver, fmt.Sprintf("%s sslmode=disable", u.DSN), nil
+	dsn := u.DSN
+	switch u.Driver {
+	case "postgres":
+		dsn = fmt.Sprintf("%s sslmode=disable", dsn)
+	default:
+		return "", "", errors.New("dialect not supported")
+	}
+
+	return u.Driver, dsn, nil
 }
 
 // InitDB sets up the databases

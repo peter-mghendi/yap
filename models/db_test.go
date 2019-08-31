@@ -19,17 +19,10 @@ func Test_parseDBURL(t *testing.T) {
 		wantErr     bool
 	}{
 		{
-			name:        "DB URL Parse Test 1",
-			args:        args{url: "postgres://username:password@data.hostname.co.ke:5234/database"},
+			name:        "PostgreSQL URL Parse Test",
+			args:        args{url: "postgres://username:password@data.hostname.com:5234/database"},
 			wantDialect: "postgres",
-			wantURL:     "dbname=database host=data.hostname.co.ke password=password port=5234 user=username sslmode=disable",
-			wantErr:     false,
-		},
-		{
-			name:        "DB URL Parse Test 2",
-			args:        args{url: "postgres://username:password@data.hostname.com:5432/mydatabase"},
-			wantDialect: "postgres",
-			wantURL:     "dbname=mydatabase host=data.hostname.com password=password port=5432 user=username sslmode=disable",
+			wantURL:     "dbname=database host=data.hostname.com password=password port=5234 user=username sslmode=disable",
 			wantErr:     false,
 		},
 	}

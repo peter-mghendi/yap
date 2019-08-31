@@ -9,9 +9,8 @@ import (
 	m "github.com/l3njo/yap/models"
 	u "github.com/l3njo/yap/utils"
 
-	_ "github.com/jinzhu/gorm/dialects/postgres"
 	"github.com/joho/godotenv"
-	_ "github.com/lib/pq"
+	_ "github.com/lib/pq" // INIT PostgreSQL drivers
 )
 
 var (

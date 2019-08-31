@@ -10,12 +10,14 @@ import (
 // User is a registered user
 type User struct {
 	Base
-	Name string   `json:"name,omitempty"`
-	Mail string   `json:"mail,omitempty"`
-	Pass string   `json:"pass,omitempty"`
-	Auth string   `json:"auth,omitempty"`
-	Life string   `json:"life,omitempty"`
-	Role userRole `json:"role,omitempty"`
+	Name      string     `json:"name"`
+	Mail      string     `json:"mail"`
+	Pass      string     `json:"pass"`
+	Auth      string     `json:"auth"`
+	Life      string     `json:"life"`
+	Role      userRole   `json:"role"`
+	Posts     []Post     `json:"posts,omitempty" sql:"-" gorm:"foreignkey:Creator"`
+	Reactions []Reaction `json:"reactions,omitempty" sql:"-" gorm:"foreignkey:User"`
 }
 
 type userRole int
@@ -51,8 +53,10 @@ func (u *User) Create() (int, error) {
 
 // Read fetches a User
 func (u *User) Read() (int, error) {
-	if err := DB.First(u).Error; gorm.IsRecordNotFoundError(err) {
+	if err := DB.Set("gorm:auto_preload", true).First(u).Error; gorm.IsRecordNotFoundError(err) {
 		return http.StatusNotFound, err
+	} else if err != nil {
+		return http.StatusInternalServerError, err
 	}
 
 	return http.StatusOK, nil
@@ -96,9 +100,4 @@ func (u *User) Delete() (int, error) {
 	}
 
 	return http.StatusAccepted, nil
-}
-
-// ReadReactions fetches a User's Reactions
-func (u *User) ReadReactions(reaction reactionType) ([]Reaction, int, error) {
-	return ReadReactions(&Reaction{User: u.ID, Type: reaction})
 }

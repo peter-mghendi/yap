@@ -72,38 +72,3 @@ func (r *Reaction) Delete() (int, error) {
 
 	return http.StatusAccepted, nil
 }
-
-// ReadReactions fetches an array of reactions per specified criteria
-// HACK Some bit hacking going on here
-func ReadReactions(r *Reaction) ([]Reaction, int, error) {
-	temp, reactions := Reaction{}, []Reaction{}
-
-	if (r.Type & ReactionApprove) != 0 {
-		temp.Type = ReactionApprove
-		if err := DB.Where(&temp).Find(reactions).Error; err != nil {
-			return nil, http.StatusInternalServerError, err
-		}
-
-		reactions = append(reactions, temp)
-	}
-
-	if (r.Type & ReactionSticker) != 0 {
-		temp.Type = ReactionSticker
-		if err := DB.Where(&temp).Find(reactions).Error; err != nil {
-			return nil, http.StatusInternalServerError, err
-		}
-
-		reactions = append(reactions, temp)
-	}
-
-	if (r.Type & ReactionComment) != 0 {
-		temp.Type = ReactionComment
-		if err := DB.Where(&temp).Find(reactions).Error; err != nil {
-			return nil, http.StatusInternalServerError, err
-		}
-
-		reactions = append(reactions, temp)
-	}
-
-	return reactions, http.StatusOK, nil
-}

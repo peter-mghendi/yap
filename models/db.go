@@ -6,6 +6,7 @@ import (
 
 	"github.com/jinzhu/gorm"
 	"github.com/xo/dburl"
+	_ "github.com/lib/pq" // INIT PostgreSQL drivers
 )
 
 // DB is the database

@@ -7,13 +7,15 @@ import (
 	"syscall"
 
 	m "github.com/l3njo/yap/models"
-	u "github.com/l3njo/yap/utils"
+	c "github.com/l3njo/yap/controllers"
 
 	"github.com/joho/godotenv"
-	_ "github.com/lib/pq" // INIT PostgreSQL drivers
+	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 )
 
 var (
+	e       *echo.Echo
 	port    string
 	signals chan os.Signal
 )
@@ -32,10 +34,28 @@ func init() {
 		os.Exit(1)
 	}()
 
-	u.Try(godotenv.Load())
-	u.Try(m.InitDB(os.Getenv("DATABASE_URL")))
+	Try(godotenv.Load())
+	Try(m.InitDB(os.Getenv("DATABASE_URL")))
 	port = os.Getenv("PORT")
 }
 
 func main() {
+	e = echo.New()
+	e.Use(middleware.Logger())
+	e.Use(middleware.Recover())
+	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
+		AllowOrigins: []string{"*"},
+		AllowMethods: []string{echo.GET, echo.HEAD, echo.PUT, echo.PATCH, echo.POST, echo.DELETE},
+	}))
+
+	e.GET("/", c.AppController)
+
+	e.Logger.Fatal(e.Start(":" + port))
+}
+
+// Try handles top-level errors
+func Try(err error) {
+	if err != nil {
+		e.Logger.Fatal(err)
+	}
 }

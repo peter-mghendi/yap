@@ -17,18 +17,19 @@ type User struct {
 	Pass      string     `json:"pass"`
 	Auth      string     `json:"auth"`
 	Life      string     `json:"life"`
-	Role      userRole   `json:"role"`
+	Role      UserRole   `json:"role"`
 	Posts     []Post     `json:"posts,omitempty" sql:"-" gorm:"foreignkey:Creator"`
 	Reactions []Reaction `json:"reactions,omitempty" sql:"-" gorm:"foreignkey:User"`
 }
 
-type userRole int
+// UserRole represents a user rank
+type UserRole string
 
-// userRoles represent various user ranks
+// UserRoles represent various user ranks
 const (
-	UserReader userRole = iota + 1
-	UserEditor
-	UserKeeper
+	UserReader UserRole = "reader"
+	UserEditor UserRole = "editor"
+	UserKeeper UserRole = "keeper"
 )
 
 // Create makes a User

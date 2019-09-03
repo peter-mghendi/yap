@@ -11,13 +11,13 @@ import (
 )
 
 // ReactionType represents a user action on a post.
-type ReactionType int
+type ReactionType string
 
 // ReactionTypes represent available user actions on posts.
 const (
-	ReactionApprove ReactionType = iota + 1
-	ReactionSticker
-	ReactionComment
+	ReactionApprove ReactionType = "approve"
+	ReactionSticker ReactionType = "sticker"
+	ReactionComment ReactionType = "comment"
 )
 
 // Reaction represents a User action on a Post

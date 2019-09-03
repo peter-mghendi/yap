@@ -1,6 +1,7 @@
 package model
 
 import (
+	"log"
 	"net/http"
 
 	"github.com/l3njo/yap-api/db"
@@ -9,11 +10,12 @@ import (
 	uuid "github.com/satori/go.uuid"
 )
 
-type reactionType int
+// ReactionType represents a user action on a post.
+type ReactionType int
 
-// reactionTypes represent available user actions on posts.
+// ReactionTypes represent available user actions on posts.
 const (
-	ReactionApprove reactionType = iota + 1
+	ReactionApprove ReactionType = iota + 1
 	ReactionSticker
 	ReactionComment
 )
@@ -21,7 +23,7 @@ const (
 // Reaction represents a User action on a Post
 type Reaction struct {
 	Base
-	Type reactionType `json:"type"`
+	Type ReactionType `json:"type"`
 	User uuid.UUID    `gorm:"type:uuid" json:"user"`
 	Post uuid.UUID    `gorm:"type:uuid" json:"post"`
 	Text string       `json:"text"`
@@ -54,12 +56,14 @@ func (r *Reaction) Update() (int, error) {
 		return http.StatusMethodNotAllowed, nil
 	}
 
-	if err := db.DB.Model(r).Updates(Reaction{Text: r.Text}).Error; gorm.IsRecordNotFoundError(err) {
+	err := db.DB.Model(r).Updates(Reaction{Text: r.Text}).Error
+	if gorm.IsRecordNotFoundError(err) {
 		return http.StatusNotFound, err
 	} else if err != nil {
 		return http.StatusInternalServerError, err
 	}
 
+	log.Println(r)
 	return http.StatusAccepted, nil
 }
 
@@ -73,4 +77,14 @@ func (r *Reaction) Delete() (int, error) {
 	}
 
 	return http.StatusAccepted, nil
+}
+
+// ReadAllReactions fetches all Reactions
+func ReadAllReactions() ([]Reaction, int, error) {
+	reactions := []Reaction{}
+	if err := db.DB.Find(&reactions).Error; gorm.IsRecordNotFoundError(err) {
+		return reactions, http.StatusNotFound, err
+	}
+
+	return reactions, http.StatusOK, nil
 }

@@ -11,4 +11,5 @@ require (
 	github.com/satori/go.uuid v1.2.0
 	github.com/xo/dburl v0.0.0-20190814034758-0192e0fb89d1
 	golang.org/x/crypto v0.0.0-20190701094942-4def268fd1a4
+	golang.org/x/net v0.0.0-20190628185345-da137c7871d7 // indirect
 )

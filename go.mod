@@ -1,4 +1,4 @@
-module github.com/l3njo/yap
+module github.com/l3njo/yap-api
 
 go 1.12
 

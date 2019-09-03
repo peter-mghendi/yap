@@ -6,8 +6,9 @@ import (
 	"os/signal"
 	"syscall"
 
-	m "github.com/l3njo/yap/models"
-	c "github.com/l3njo/yap/controllers"
+	"github.com/l3njo/yap-api/db"
+	"github.com/l3njo/yap-api/handler"
+	"github.com/l3njo/yap-api/model"
 
 	"github.com/joho/godotenv"
 	"github.com/labstack/echo/v4"
@@ -22,7 +23,7 @@ var (
 
 func cleanup() {
 	log.Println("Shutting down server.")
-	m.DB.Close()
+	db.DB.Close()
 }
 
 func init() {
@@ -34,13 +35,13 @@ func init() {
 		os.Exit(1)
 	}()
 
+	e = echo.New()
 	Try(godotenv.Load())
-	Try(m.InitDB(os.Getenv("DATABASE_URL")))
+	Try(model.InitDB(os.Getenv("DATABASE_URL")))
 	port = os.Getenv("PORT")
 }
 
 func main() {
-	e = echo.New()
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
@@ -48,8 +49,7 @@ func main() {
 		AllowMethods: []string{echo.GET, echo.HEAD, echo.PUT, echo.PATCH, echo.POST, echo.DELETE},
 	}))
 
-	e.GET("/", c.AppController)
-
+	e.GET("/", handler.AppController)
 	e.Logger.Fatal(e.Start(":" + port))
 }
 

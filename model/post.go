@@ -1,7 +1,9 @@
-package models
+package model
 
 import (
 	"net/http"
+
+	"github.com/l3njo/yap-api/db"
 
 	"github.com/jinzhu/gorm"
 	"github.com/lib/pq"
@@ -62,7 +64,7 @@ type Flicker struct {
 // Create makes an Article
 func (a *Article) Create() (int, error) {
 	a.Release = false
-	if err := DB.Create(a).Error; err != nil {
+	if err := db.DB.Create(a).Error; err != nil {
 		return http.StatusInternalServerError, err
 	}
 
@@ -71,12 +73,12 @@ func (a *Article) Create() (int, error) {
 
 // Read fetches an Article
 func (a *Article) Read() (int, error) {
-	if err := DB.Preload(strReactions).First(a).Error; gorm.IsRecordNotFoundError(err) {
+	if err := db.DB.Preload(strReactions).First(a).Error; gorm.IsRecordNotFoundError(err) {
 		return http.StatusNotFound, err
 	}
 
 	a.Summons++
-	DB.Save(a)
+	db.DB.Save(a)
 	return http.StatusOK, nil
 }
 
@@ -93,7 +95,7 @@ func (a *Article) Update() (int, error) {
 		Content: a.Content,
 	}
 
-	if err := DB.Model(a).Updates(article).Error; gorm.IsRecordNotFoundError(err) {
+	if err := db.DB.Model(a).Updates(article).Error; gorm.IsRecordNotFoundError(err) {
 		return http.StatusNotFound, err
 	} else if err != nil {
 		return http.StatusInternalServerError, err
@@ -104,8 +106,8 @@ func (a *Article) Update() (int, error) {
 
 // Delete removes an Article
 func (a *Article) Delete() (int, error) {
-	db := DB.Delete(a)
-	if num, err := db.RowsAffected, db.Error; num == 0 {
+	res := db.DB.Delete(a)
+	if num, err := res.RowsAffected, res.Error; num == 0 {
 		return http.StatusNotFound, gorm.ErrRecordNotFound
 	} else if err != nil {
 		return http.StatusInternalServerError, nil
@@ -120,14 +122,14 @@ func (a *Article) Publish() (int, error) {
 		return http.StatusNotModified, nil
 	}
 
-	if err := DB.First(a).Error; gorm.IsRecordNotFoundError(err) {
+	if err := db.DB.First(a).Error; gorm.IsRecordNotFoundError(err) {
 		return http.StatusNotFound, err
 	} else if err != nil {
 		return http.StatusInternalServerError, err
 	}
 
 	a.Release, a.Summons = true, 0
-	DB.Save(a)
+	db.DB.Save(a)
 	return http.StatusAccepted, nil
 }
 
@@ -137,21 +139,21 @@ func (a *Article) Retract() (int, error) {
 		return http.StatusNotModified, nil
 	}
 
-	if err := DB.First(a).Error; gorm.IsRecordNotFoundError(err) {
+	if err := db.DB.First(a).Error; gorm.IsRecordNotFoundError(err) {
 		return http.StatusNotFound, err
 	} else if err != nil {
 		return http.StatusInternalServerError, err
 	}
 
 	a.Release, a.Summons = false, 0
-	DB.Save(a)
+	db.DB.Save(a)
 	return http.StatusAccepted, nil
 }
 
 // Create makes a Gallery
 func (g *Gallery) Create() (int, error) {
 	g.Release = false
-	if err := DB.Create(g).Error; err != nil {
+	if err := db.DB.Create(g).Error; err != nil {
 		return http.StatusInternalServerError, err
 	}
 
@@ -160,12 +162,12 @@ func (g *Gallery) Create() (int, error) {
 
 // Read fetches a Gallery
 func (g *Gallery) Read() (int, error) {
-	if err := DB.Preload(strReactions).First(g).Error; gorm.IsRecordNotFoundError(err) {
+	if err := db.DB.Preload(strReactions).First(g).Error; gorm.IsRecordNotFoundError(err) {
 		return http.StatusNotFound, err
 	}
 
 	g.Summons++
-	DB.Save(g)
+	db.DB.Save(g)
 	return http.StatusOK, nil
 }
 
@@ -183,7 +185,7 @@ func (g *Gallery) Update() (int, error) {
 		Caption: g.Caption,
 	}
 
-	if err := DB.Model(g).Updates(gallery).Error; gorm.IsRecordNotFoundError(err) {
+	if err := db.DB.Model(g).Updates(gallery).Error; gorm.IsRecordNotFoundError(err) {
 		return http.StatusNotFound, err
 	} else if err != nil {
 		return http.StatusInternalServerError, err
@@ -194,8 +196,8 @@ func (g *Gallery) Update() (int, error) {
 
 // Delete removes a Gallery
 func (g *Gallery) Delete() (int, error) {
-	db := DB.Delete(g)
-	if num, err := db.RowsAffected, db.Error; num == 0 {
+	res := db.DB.Delete(g)
+	if num, err := res.RowsAffected, res.Error; num == 0 {
 		return http.StatusNotFound, gorm.ErrRecordNotFound
 	} else if err != nil {
 		return http.StatusInternalServerError, nil
@@ -210,14 +212,14 @@ func (g *Gallery) Publish() (int, error) {
 		return http.StatusNotModified, nil
 	}
 
-	if err := DB.First(g).Error; gorm.IsRecordNotFoundError(err) {
+	if err := db.DB.First(g).Error; gorm.IsRecordNotFoundError(err) {
 		return http.StatusNotFound, err
 	} else if err != nil {
 		return http.StatusInternalServerError, err
 	}
 
 	g.Release, g.Summons = true, 0
-	DB.Save(g)
+	db.DB.Save(g)
 	return http.StatusAccepted, nil
 }
 
@@ -227,21 +229,21 @@ func (g *Gallery) Retract() (int, error) {
 		return http.StatusNotModified, nil
 	}
 
-	if err := DB.First(g).Error; gorm.IsRecordNotFoundError(err) {
+	if err := db.DB.First(g).Error; gorm.IsRecordNotFoundError(err) {
 		return http.StatusNotFound, err
 	} else if err != nil {
 		return http.StatusInternalServerError, err
 	}
 
 	g.Release, g.Summons = false, 0
-	DB.Save(g)
+	db.DB.Save(g)
 	return http.StatusAccepted, nil
 }
 
 // Create makes a Flicker
 func (f *Flicker) Create() (int, error) {
 	f.Release = false
-	if err := DB.Create(f).Error; err != nil {
+	if err := db.DB.Create(f).Error; err != nil {
 		return http.StatusInternalServerError, err
 	}
 
@@ -250,12 +252,12 @@ func (f *Flicker) Create() (int, error) {
 
 // Read fetches a Flicker
 func (f *Flicker) Read() (int, error) {
-	if err := DB.Preload(strReactions).First(f).Error; gorm.IsRecordNotFoundError(err) {
+	if err := db.DB.Preload(strReactions).First(f).Error; gorm.IsRecordNotFoundError(err) {
 		return http.StatusNotFound, err
 	}
 
 	f.Summons++
-	DB.Save(f)
+	db.DB.Save(f)
 	return http.StatusOK, nil
 }
 
@@ -273,7 +275,7 @@ func (f *Flicker) Update() (int, error) {
 		Caption: f.Caption,
 	}
 
-	if err := DB.Model(f).Updates(flicker).Error; gorm.IsRecordNotFoundError(err) {
+	if err := db.DB.Model(f).Updates(flicker).Error; gorm.IsRecordNotFoundError(err) {
 		return http.StatusNotFound, err
 	} else if err != nil {
 		return http.StatusInternalServerError, err
@@ -284,8 +286,8 @@ func (f *Flicker) Update() (int, error) {
 
 // Delete removes a Flicker
 func (f *Flicker) Delete() (int, error) {
-	db := DB.Delete(f)
-	if num, err := db.RowsAffected, db.Error; num == 0 {
+	res := db.DB.Delete(f)
+	if num, err := res.RowsAffected, res.Error; num == 0 {
 		return http.StatusNotFound, gorm.ErrRecordNotFound
 	} else if err != nil {
 		return http.StatusInternalServerError, nil
@@ -300,14 +302,14 @@ func (f *Flicker) Publish() (int, error) {
 		return http.StatusNotModified, nil
 	}
 
-	if err := DB.First(f).Error; gorm.IsRecordNotFoundError(err) {
+	if err := db.DB.First(f).Error; gorm.IsRecordNotFoundError(err) {
 		return http.StatusNotFound, err
 	} else if err != nil {
 		return http.StatusInternalServerError, err
 	}
 
 	f.Release, f.Summons = true, 0
-	DB.Save(f)
+	db.DB.Save(f)
 	return http.StatusAccepted, nil
 }
 
@@ -317,13 +319,13 @@ func (f *Flicker) Retract() (int, error) {
 		return http.StatusNotModified, nil
 	}
 
-	if err := DB.First(f).Error; gorm.IsRecordNotFoundError(err) {
+	if err := db.DB.First(f).Error; gorm.IsRecordNotFoundError(err) {
 		return http.StatusNotFound, err
 	} else if err != nil {
 		return http.StatusInternalServerError, err
 	}
 
 	f.Release, f.Summons = true, 0
-	DB.Save(f)
+	db.DB.Save(f)
 	return http.StatusAccepted, nil
 }

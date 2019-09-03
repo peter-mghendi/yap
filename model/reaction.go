@@ -1,7 +1,9 @@
-package models
+package model
 
 import (
 	"net/http"
+
+	"github.com/l3njo/yap-api/db"
 
 	"github.com/jinzhu/gorm"
 	uuid "github.com/satori/go.uuid"
@@ -31,7 +33,7 @@ func (r *Reaction) Create() (int, error) {
 		r.Text = ""
 	}
 
-	if err := DB.Create(r).Error; err != nil {
+	if err := db.DB.Create(r).Error; err != nil {
 		return http.StatusInternalServerError, err
 	}
 
@@ -39,7 +41,7 @@ func (r *Reaction) Create() (int, error) {
 }
 
 func (r *Reaction) Read() (int, error) {
-	if err := DB.First(r).Error; gorm.IsRecordNotFoundError(err) {
+	if err := db.DB.First(r).Error; gorm.IsRecordNotFoundError(err) {
 		return http.StatusNotFound, err
 	}
 
@@ -52,7 +54,7 @@ func (r *Reaction) Update() (int, error) {
 		return http.StatusMethodNotAllowed, nil
 	}
 
-	if err := DB.Model(r).Updates(Reaction{Text: r.Text}).Error; gorm.IsRecordNotFoundError(err) {
+	if err := db.DB.Model(r).Updates(Reaction{Text: r.Text}).Error; gorm.IsRecordNotFoundError(err) {
 		return http.StatusNotFound, err
 	} else if err != nil {
 		return http.StatusInternalServerError, err
@@ -63,7 +65,7 @@ func (r *Reaction) Update() (int, error) {
 
 // Delete removes existing reactions
 func (r *Reaction) Delete() (int, error) {
-	db := DB.Delete(r)
+	db := db.DB.Delete(r)
 	if num, err := db.RowsAffected, db.Error; num == 0 {
 		return http.StatusNotFound, gorm.ErrRecordNotFound
 	} else if err != nil {

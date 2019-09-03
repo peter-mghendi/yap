@@ -1,12 +1,12 @@
-package models
+package db
 
 import (
 	"errors"
 	"fmt"
 
 	"github.com/jinzhu/gorm"
-	"github.com/xo/dburl"
 	_ "github.com/lib/pq" // INIT PostgreSQL drivers
+	"github.com/xo/dburl"
 )
 
 // DB is the database
@@ -30,8 +30,8 @@ func parseDBURL(url string) (string, string, error) {
 	return u.Driver, dsn, nil
 }
 
-// InitDB sets up the databases
-func InitDB(url string) error {
+// Init sets up the database
+func Init(url string) error {
 	dialect, uri, err := parseDBURL(url)
 	if err != nil {
 		return err
@@ -43,6 +43,5 @@ func InitDB(url string) error {
 	}
 
 	DB = conn
-	DB.Debug().AutoMigrate(&User{}, &Article{}, &Gallery{}, &Flicker{}, &Reaction{})
 	return nil
 }

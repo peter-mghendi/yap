@@ -1,7 +1,9 @@
-package models
+package model
 
 import (
 	"net/http"
+
+	"github.com/l3njo/yap-api/db"
 
 	"github.com/jinzhu/gorm"
 	"golang.org/x/crypto/bcrypt"
@@ -40,11 +42,11 @@ func (u *User) Create() (int, error) {
 
 	u.Pass = string(hash)
 	u.Role = UserReader
-	if DB.Model(&User{}).Count(&count); count == 0 {
+	if db.DB.Model(&User{}).Count(&count); count == 0 {
 		u.Role = UserKeeper
 	}
 
-	if err = DB.Create(u).Error; err != nil {
+	if err = db.DB.Create(u).Error; err != nil {
 		return http.StatusInternalServerError, err
 	}
 
@@ -53,7 +55,7 @@ func (u *User) Create() (int, error) {
 
 // Read fetches a User
 func (u *User) Read() (int, error) {
-	if err := DB.Set("gorm:auto_preload", true).First(u).Error; gorm.IsRecordNotFoundError(err) {
+	if err := db.DB.Set("gorm:auto_preload", true).First(u).Error; gorm.IsRecordNotFoundError(err) {
 		return http.StatusNotFound, err
 	} else if err != nil {
 		return http.StatusInternalServerError, err
@@ -81,7 +83,7 @@ func (u *User) Update() (int, error) {
 		Life: u.Life,
 	}
 
-	if err := DB.Model(u).Updates(user).Error; gorm.IsRecordNotFoundError(err) {
+	if err := db.DB.Model(u).Updates(user).Error; gorm.IsRecordNotFoundError(err) {
 		return http.StatusNotFound, err
 	} else if err != nil {
 		return http.StatusInternalServerError, err
@@ -92,7 +94,7 @@ func (u *User) Update() (int, error) {
 
 // Delete removes a User
 func (u *User) Delete() (int, error) {
-	db := DB.Delete(u)
+	db := db.DB.Delete(u)
 	if num, err := db.RowsAffected, db.Error; num == 0 {
 		return http.StatusNotFound, gorm.ErrRecordNotFound
 	} else if err != nil {

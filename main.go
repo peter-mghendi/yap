@@ -1,6 +1,7 @@
 package main
 
 import (
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
@@ -49,11 +50,31 @@ func main() {
 		AllowMethods: []string{echo.GET, echo.HEAD, echo.PUT, echo.PATCH, echo.POST, echo.DELETE},
 	}))
 
-	u := e.Group("/users")
+	u := e.Group("/users") // TODO
 	u.GET("", handler.AppController)
 
 	p := e.Group("/posts")
-	p.GET("", handler.AppController)
+	p.DELETE("/:id/delete", handler.DeletePost)
+	p.PUT("/:id/publish", handler.PublishPost)
+	p.PUT("/:id/retract", handler.RetractPost)
+
+	a := p.Group("/articles")
+	a.GET("", handler.GetArticles)
+	a.GET("/:id", handler.GetArticleByID)
+	a.POST("/create", handler.CreateArticle)
+	a.PUT("/:id/update", handler.UpdateArticle)
+
+	g := p.Group("/galleries")
+	g.GET("", handler.GetGalleries)
+	g.GET("/:id", handler.GetGalleryByID)
+	g.POST("/create", handler.CreateGallery)
+	g.PUT("/:id/update", handler.UpdateGallery)
+
+	f := p.Group("/flickers")
+	f.GET("", handler.GetFlickers)
+	f.GET("/:id", handler.GetFlickerByID)
+	f.POST("/create", handler.CreateFlicker)
+	f.PUT("/:id/update", handler.UpdateFlicker)
 
 	r := e.Group("/reactions")
 	r.GET("", handler.GetReactions)
@@ -61,6 +82,20 @@ func main() {
 	r.POST("/create", handler.CreateReaction)
 	r.PUT("/:id/update", handler.UpdateReaction)
 	r.DELETE("/:id/delete", handler.DeleteReaction)
+
+	e.HTTPErrorHandler = func(err error, c echo.Context) {
+		code := http.StatusInternalServerError
+		if he, ok := err.(*echo.HTTPError); ok {
+			code = he.Code
+		}
+
+		resp := handler.Response{
+			Message: http.StatusText(code),
+		}
+
+		c.JSON(code, resp)
+		c.Logger().Error(err)
+	}
 
 	e.GET("/", handler.AppController)
 	e.Logger.Fatal(e.Start(":" + port))

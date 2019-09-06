@@ -9,6 +9,18 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
+// ReactionResponse is a response containing one Reaction
+type ReactionResponse struct {
+	Response
+	model.Reaction `json:"data"`
+}
+
+// ReactionsResponse is a response containing a slice of Reactions
+type ReactionsResponse struct {
+	Response
+	Reactions []model.Reaction `json:"data"`
+}
+
 // GetReactions handles the "/reactions" route.
 func GetReactions(c echo.Context) error {
 	resp, status := ReactionsResponse{}, 0
@@ -19,7 +31,7 @@ func GetReactions(c echo.Context) error {
 	}
 
 	resp.Status, resp.Message, resp.Reactions = true, http.StatusText(status), reactions
-	return c.JSON(status, reactions)
+	return c.JSON(status, resp)
 }
 
 // GetReactionByID handles the "/reactions/:id" route.
@@ -111,6 +123,6 @@ func DeleteReaction(c echo.Context) error {
 		return c.JSON(status, resp)
 	}
 
-	resp.Status, resp.Message, resp.Reaction = true, http.StatusText(status), reaction
+	resp.Status, resp.Message = true, http.StatusText(status)
 	return c.JSON(status, resp)
 }

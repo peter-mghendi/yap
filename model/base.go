@@ -7,12 +7,6 @@ import (
 	uuid "github.com/satori/go.uuid"
 )
 
-const (
-	strPosts         = "Posts"
-	strPostReactions = "Posts.Reactions"
-	strReactions     = "Reactions"
-)
-
 // Base contains common columns for all tables.
 type Base struct {
 	ID        uuid.UUID  `gorm:"type:uuid;primary_key;"`

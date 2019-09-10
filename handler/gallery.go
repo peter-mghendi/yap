@@ -50,7 +50,7 @@ func GetGalleryByID(c echo.Context) error {
 		return c.JSON(status, resp)
 	}
 
-	log.Println(gallery.Reactions)
+	log.Println(gallery.Reactions) // DEBUG
 	resp.Status, resp.Message, resp.Post = true, http.StatusText(status), gallery
 	return c.JSON(status, resp)
 }

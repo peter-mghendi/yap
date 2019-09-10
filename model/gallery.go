@@ -23,6 +23,7 @@ func (g *Gallery) Create() (int, error) {
 			Summary: g.Summary,
 			Overlay: g.Overlay,
 			Section: g.Section,
+			Pattern: galleryPost,
 			Creator: g.Creator,
 			Markers: g.Markers,
 		},
@@ -34,7 +35,7 @@ func (g *Gallery) Create() (int, error) {
 		return http.StatusInternalServerError, err
 	}
 
-    *g = gallery
+	*g = gallery
 	return http.StatusCreated, nil
 }
 
@@ -122,4 +123,14 @@ func (g *Gallery) Retract() (int, error) {
 	g.Release, g.Summons = false, 0
 	db.DB.Save(g)
 	return http.StatusAccepted, nil
+}
+
+// ReadAllGalleries fetches all Galleries
+func ReadAllGalleries() ([]Gallery, int, error) {
+	galleries := []Gallery{}
+	if err := db.DB.Set("gorm:auto_preload", true).Find(&galleries).Error; gorm.IsRecordNotFoundError(err) {
+		return galleries, http.StatusNotFound, err
+	}
+
+	return galleries, http.StatusOK, nil
 }

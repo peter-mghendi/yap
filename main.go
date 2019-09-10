@@ -50,8 +50,14 @@ func main() {
 		AllowMethods: []string{echo.GET, echo.HEAD, echo.PUT, echo.PATCH, echo.POST, echo.DELETE},
 	}))
 
-	u := e.Group("/users") // TODO
-	u.GET("", handler.AppController)
+	u := e.Group("/users")
+	u.GET("", handler.GetUsers)
+	u.GET("/:id", handler.GetUserByID)
+	u.POST("/join", handler.JoinUser)
+	u.POST("/auth", handler.AuthUser)
+	u.PUT("/:id/update", handler.UpdateUser)
+	u.PUT("/:id/assign", handler.AssignUser)
+	u.DELETE("/:id/delete", handler.DeleteUser)
 
 	p := e.Group("/posts")
 	p.DELETE("/:id/delete", handler.DeletePost)

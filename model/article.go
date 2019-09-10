@@ -21,6 +21,7 @@ func (a *Article) Create() (int, error) {
 			Summary: a.Summary,
 			Overlay: a.Overlay,
 			Section: a.Section,
+			Pattern: articlePost,
 			Creator: a.Creator,
 			Markers: a.Markers,
 		},
@@ -118,4 +119,14 @@ func (a *Article) Retract() (int, error) {
 	a.Release, a.Summons = false, 0
 	db.DB.Save(a)
 	return http.StatusAccepted, nil
+}
+
+// ReadAllArticles fetches all Articles
+func ReadAllArticles() ([]Article, int, error) {
+	articles := []Article{}
+	if err := db.DB.Set("gorm:auto_preload", true).Find(&articles).Error; gorm.IsRecordNotFoundError(err) {
+		return articles, http.StatusNotFound, err
+	}
+
+	return articles, http.StatusOK, nil
 }

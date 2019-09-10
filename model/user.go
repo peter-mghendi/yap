@@ -1,6 +1,7 @@
 package model
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/l3njo/yap-api/db"
@@ -90,6 +91,12 @@ func (u *User) Update() (int, error) {
 		return http.StatusInternalServerError, err
 	}
 
+	if err := db.DB.First(u).Error; gorm.IsRecordNotFoundError(err) {
+		return http.StatusNotFound, err
+	} else if err != nil {
+		return http.StatusInternalServerError, err
+	}
+
 	return http.StatusAccepted, nil
 }
 
@@ -99,8 +106,61 @@ func (u *User) Delete() (int, error) {
 	if num, err := db.RowsAffected, db.Error; num == 0 {
 		return http.StatusNotFound, gorm.ErrRecordNotFound
 	} else if err != nil {
-		return http.StatusInternalServerError, nil
+		return http.StatusInternalServerError, err
 	}
 
 	return http.StatusAccepted, nil
+}
+
+// ValidateAuth checks user details format
+func (u *User) ValidateAuth() (int, error) {
+	code := http.StatusOK
+	if u.Mail == "" || u.Pass == "" {
+		code = http.StatusBadRequest
+		return code, errors.New(http.StatusText(code))
+	}
+
+	return code, errors.New(http.StatusText(code))
+}
+
+// TryAuth checks user credentials
+func (u *User) TryAuth() (int, error) {
+	pass := []byte(u.Pass)
+	user := &User{Mail: u.Mail}
+	if err := db.DB.Find(user).Error; gorm.IsRecordNotFoundError(err) {
+		return http.StatusNotFound, err
+	} else if err != nil {
+		return http.StatusInternalServerError, err
+	}
+
+	err := bcrypt.CompareHashAndPassword([]byte(user.Pass), pass)
+	if err == bcrypt.ErrMismatchedHashAndPassword {
+		return http.StatusNotFound, err
+	} else if err != nil {
+		return http.StatusInternalServerError, err
+	}
+
+	*u = *user
+	return http.StatusAccepted, nil
+}
+
+// ReadAllUsers fetches all Users
+func ReadAllUsers() ([]User, int, error) {
+	users := []User{}
+	if err := db.DB.Set("gorm:auto_preload", true).Find(&users).Error; gorm.IsRecordNotFoundError(err) {
+		return users, http.StatusNotFound, err
+	}
+
+	return users, http.StatusOK, nil
+}
+
+// CountUsers counts specified type of users
+func CountUsers(u *User) (int, int, error) {
+	var count int
+	users := []User{}
+	if err := db.DB.Where(u).Find(&users).Count(&count).Error; err != nil {
+		return count, http.StatusOK, err
+	}
+
+	return count, http.StatusOK, nil
 }

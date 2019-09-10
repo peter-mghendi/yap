@@ -3,9 +3,6 @@ package model
 import (
 	"net/http"
 
-	"github.com/l3njo/yap-api/db"
-
-	"github.com/jinzhu/gorm"
 	"github.com/lib/pq"
 	uuid "github.com/satori/go.uuid"
 )
@@ -22,6 +19,14 @@ type Post interface {
 	Retract() (int, error)
 }
 
+type postPattern string
+
+const (
+	articlePost postPattern = "article"
+	galleryPost postPattern = "gallery"
+	flickerPost postPattern = "flicker"
+)
+
 // PostBase is the underlying object for all post types
 type PostBase struct {
 	Base
@@ -31,39 +36,10 @@ type PostBase struct {
 	Section   string         `json:"section"`
 	Summons   int            `json:"summons"`
 	Release   bool           `json:"release"`
+	Pattern   postPattern    `json:"pattern"`
 	Creator   uuid.UUID      `json:"creator" gorm:"type:uuid"`
 	Markers   pq.StringArray `json:"markers" gorm:"type:varchar(255)[]"`
 	Reactions []Reaction     `json:"reactions,omitempty" sql:"-" gorm:"foreignkey:Post"`
-}
-
-// ReadAllArticles fetches all Articles
-func ReadAllArticles() ([]Article, int, error) {
-	articles := []Article{}
-	if err := db.DB.Set("gorm:auto_preload", true).Find(&articles).Error; gorm.IsRecordNotFoundError(err) {
-		return articles, http.StatusNotFound, err
-	}
-
-	return articles, http.StatusOK, nil
-}
-
-// ReadAllGalleries fetches all Galleries
-func ReadAllGalleries() ([]Gallery, int, error) {
-	galleries := []Gallery{}
-	if err := db.DB.Set("gorm:auto_preload", true).Find(&galleries).Error; gorm.IsRecordNotFoundError(err) {
-		return galleries, http.StatusNotFound, err
-	}
-
-	return galleries, http.StatusOK, nil
-}
-
-// ReadAllFlickers fetches all Flickers
-func ReadAllFlickers() ([]Flicker, int, error) {
-	flickers := []Flicker{}
-	if err := db.DB.Set("gorm:auto_preload", true).Find(&flickers).Error; gorm.IsRecordNotFoundError(err) {
-		return flickers, http.StatusNotFound, err
-	}
-
-	return flickers, http.StatusOK, nil
 }
 
 // GetPost finds a Post across Post models.

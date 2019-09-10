@@ -1,7 +1,6 @@
 package model
 
 import (
-	"log"
 	"net/http"
 
 	"github.com/l3njo/yap-api/db"
@@ -63,7 +62,6 @@ func (r *Reaction) Update() (int, error) {
 		return http.StatusInternalServerError, err
 	}
 
-	log.Println(r)
 	return http.StatusAccepted, nil
 }
 

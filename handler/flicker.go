@@ -3,7 +3,8 @@ package handler
 import (
 	"net/http"
 
-	"github.com/l3njo/yap-api/model"
+	"github.com/l3njo/yap/model"
+	"github.com/l3njo/yap/util"
 	"github.com/labstack/echo/v4"
 	uuid "github.com/satori/go.uuid"
 )
@@ -27,6 +28,23 @@ func GetFlickers(c echo.Context) error {
 	return c.JSON(status, resp)
 }
 
+// GetPublicFlickers handles the "/posts/flickers/public" route.
+func GetPublicFlickers(c echo.Context) error {
+	resp, status := FlickersResponse{}, 0
+	flickers, status, err := model.ReadAllFlickers()
+	if err != nil {
+		resp.Message = http.StatusText(status)
+		return c.JSON(status, resp)
+	}
+
+	flickers = util.FilterF(flickers, func(f model.Flicker) bool {
+		return f.Release
+	})
+
+	resp.Status, resp.Message, resp.Flickers = true, http.StatusText(status), flickers
+	return c.JSON(status, resp)
+}
+
 // GetFlickerByID handles the "/posts/flickers/:id" route.
 func GetFlickerByID(c echo.Context) error {
 	resp, status := PostResponse{}, 0
@@ -45,6 +63,38 @@ func GetFlickerByID(c echo.Context) error {
 
 	status, err := flicker.Read()
 	if err != nil {
+		resp.Message = http.StatusText(status)
+		return c.JSON(status, resp)
+	}
+
+	resp.Status, resp.Message, resp.Post = true, http.StatusText(status), flicker
+	return c.JSON(status, resp)
+}
+
+// GetPublicFlickerByID handles the "/posts/flickers/public/:id" route.
+func GetPublicFlickerByID(c echo.Context) error {
+	resp, status := PostResponse{}, 0
+	id := uuid.FromStringOrNil(c.Param("id"))
+	if uuid.Equal(id, uuid.Nil) {
+		status = http.StatusBadRequest
+		resp.Message = http.StatusText(status)
+		return c.JSON(status, resp)
+	}
+
+	flicker := &model.Flicker{
+		PostBase: model.PostBase{
+			Base: model.Base{ID: id},
+		},
+	}
+
+	status, err := flicker.Read()
+	if err != nil {
+		resp.Message = http.StatusText(status)
+		return c.JSON(status, resp)
+	}
+
+	if !flicker.Release {
+		status = http.StatusNotFound
 		resp.Message = http.StatusText(status)
 		return c.JSON(status, resp)
 	}

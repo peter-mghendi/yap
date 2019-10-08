@@ -3,7 +3,8 @@ package handler
 import (
 	"net/http"
 
-	"github.com/l3njo/yap-api/model"
+	"github.com/dgrijalva/jwt-go"
+	"github.com/l3njo/yap/model"
 	uuid "github.com/satori/go.uuid"
 
 	"github.com/labstack/echo/v4"
@@ -60,6 +61,10 @@ func GetReactionByID(c echo.Context) error {
 
 // CreateReaction handles the "/reactions/create" route.
 func CreateReaction(c echo.Context) error {
+	userToken := c.Get("user").(*jwt.Token)
+	claims := userToken.Claims.(*JwtCustomClaims)
+	user := claims.User
+
 	resp, status := ReactionResponse{}, 0
 	reaction := model.Reaction{}
 	if err := c.Bind(&reaction); err != nil {
@@ -68,6 +73,7 @@ func CreateReaction(c echo.Context) error {
 		return c.JSON(status, resp)
 	}
 
+	reaction.User = user
 	if status, err := reaction.Create(); err != nil {
 		resp.Message = http.StatusText(status)
 		return c.JSON(status, resp)
@@ -78,6 +84,7 @@ func CreateReaction(c echo.Context) error {
 }
 
 // UpdateReaction handles the "/reactions/:id/update" route.
+// TODO Ensure reaction belongs to auth'ed user
 func UpdateReaction(c echo.Context) error {
 	resp, status := ReactionResponse{}, 0
 	reaction, r := model.Reaction{}, model.Reaction{}
@@ -111,6 +118,7 @@ func UpdateReaction(c echo.Context) error {
 }
 
 // DeleteReaction handles the "/reactions/:id/delete" route.
+// TODO Ensure reaction belongs to auth'ed user
 func DeleteReaction(c echo.Context) error {
 	resp, status := ReactionResponse{}, 0
 	reaction := model.Reaction{

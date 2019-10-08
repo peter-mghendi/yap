@@ -3,7 +3,8 @@ package handler
 import (
 	"net/http"
 
-	"github.com/l3njo/yap-api/model"
+	"github.com/dgrijalva/jwt-go"
+	"github.com/l3njo/yap/model"
 	uuid "github.com/satori/go.uuid"
 
 	"github.com/labstack/echo/v4"
@@ -17,6 +18,10 @@ type PostResponse struct {
 
 // PublishPost handles the "/posts/:id/publish" route.
 func PublishPost(c echo.Context) error {
+	userToken := c.Get("user").(*jwt.Token)
+	claims := userToken.Claims.(*JwtCustomClaims)
+	_, _ = claims.User, claims.Role // TODO
+
 	resp, status := PostResponse{}, 0
 	id := uuid.FromStringOrNil(c.Param("id"))
 	if uuid.Equal(id, uuid.Nil) {
@@ -43,6 +48,10 @@ func PublishPost(c echo.Context) error {
 
 // RetractPost handles the "/posts/:id/retract" route.
 func RetractPost(c echo.Context) error {
+	userToken := c.Get("user").(*jwt.Token)
+	claims := userToken.Claims.(*JwtCustomClaims)
+	_, _ = claims.User, claims.Role // TODO
+
 	resp, status := PostResponse{}, 0
 	id := uuid.FromStringOrNil(c.Param("id"))
 	if uuid.Equal(id, uuid.Nil) {
@@ -69,6 +78,10 @@ func RetractPost(c echo.Context) error {
 
 // DeletePost handles the "/posts/:id/delete" route.
 func DeletePost(c echo.Context) error {
+	userToken := c.Get("user").(*jwt.Token)
+	claims := userToken.Claims.(*JwtCustomClaims)
+	_, _ = claims.User, claims.Role // TODO
+
 	resp, status := PostResponse{}, 0
 	id := uuid.FromStringOrNil(c.Param("id"))
 	if uuid.Equal(id, uuid.Nil) {

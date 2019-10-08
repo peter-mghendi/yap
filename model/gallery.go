@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/jinzhu/gorm"
-	"github.com/l3njo/yap-api/db"
+	"github.com/l3njo/yap/db"
 	"github.com/lib/pq"
 )
 

@@ -3,7 +3,9 @@ package handler
 import (
 	"net/http"
 
-	"github.com/l3njo/yap-api/model"
+	"github.com/dgrijalva/jwt-go"
+	"github.com/l3njo/yap/model"
+	"github.com/l3njo/yap/util"
 	"github.com/labstack/echo/v4"
 	uuid "github.com/satori/go.uuid"
 )
@@ -22,6 +24,23 @@ func GetArticles(c echo.Context) error {
 		resp.Message = http.StatusText(status)
 		return c.JSON(status, resp)
 	}
+
+	resp.Status, resp.Message, resp.Articles = true, http.StatusText(status), articles
+	return c.JSON(status, resp)
+}
+
+// GetPublicArticles handles the "/posts/articles/public" route.
+func GetPublicArticles(c echo.Context) error {
+	resp, status := ArticlesResponse{}, 0
+	articles, status, err := model.ReadAllArticles()
+	if err != nil {
+		resp.Message = http.StatusText(status)
+		return c.JSON(status, resp)
+	}
+
+	articles = util.FilterA(articles, func(a model.Article) bool {
+		return a.Release
+	})
 
 	resp.Status, resp.Message, resp.Articles = true, http.StatusText(status), articles
 	return c.JSON(status, resp)
@@ -53,8 +72,44 @@ func GetArticleByID(c echo.Context) error {
 	return c.JSON(status, resp)
 }
 
+// GetPublicArticleByID handles the "/posts/articles/public/:id" route.
+func GetPublicArticleByID(c echo.Context) error {
+	resp, status := PostResponse{}, 0
+	id := uuid.FromStringOrNil(c.Param("id"))
+	if uuid.Equal(id, uuid.Nil) {
+		status = http.StatusBadRequest
+		resp.Message = http.StatusText(status)
+		return c.JSON(status, resp)
+	}
+
+	article := &model.Article{
+		PostBase: model.PostBase{
+			Base: model.Base{ID: id},
+		},
+	}
+
+	status, err := article.Read()
+	if err != nil {
+		resp.Message = http.StatusText(status)
+		return c.JSON(status, resp)
+	}
+
+	if !article.Release {
+		status = http.StatusNotFound
+		resp.Message = http.StatusText(status)
+		return c.JSON(status, resp)
+	}
+
+	resp.Status, resp.Message, resp.Post = true, http.StatusText(status), article
+	return c.JSON(status, resp)
+}
+
 // CreateArticle handles the "/posts/articles/create" route.
 func CreateArticle(c echo.Context) error {
+	userToken := c.Get("user").(*jwt.Token)
+	claims := userToken.Claims.(*JwtCustomClaims)
+	user, _ := claims.User, claims.Role // TODO
+
 	resp, status := PostResponse{}, 0
 	article := &model.Article{}
 	if err := c.Bind(article); err != nil {
@@ -63,6 +118,7 @@ func CreateArticle(c echo.Context) error {
 		return c.JSON(status, resp)
 	}
 
+	article.Creator = user
 	if status, err := article.Create(); err != nil {
 		resp.Message = http.StatusText(status)
 		return c.JSON(status, resp)
@@ -74,6 +130,10 @@ func CreateArticle(c echo.Context) error {
 
 // UpdateArticle handles the "/posts/articles/:id/update" route.
 func UpdateArticle(c echo.Context) error {
+	userToken := c.Get("user").(*jwt.Token)
+	claims := userToken.Claims.(*JwtCustomClaims)
+	_, _ = claims.User, claims.Role // TODO
+
 	resp, status := PostResponse{}, 0
 	article, a := &model.Article{}, &model.Article{}
 	if err := c.Bind(a); err != nil {

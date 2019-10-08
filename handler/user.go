@@ -3,7 +3,7 @@ package handler
 import (
 	"net/http"
 
-	"github.com/l3njo/yap-api/model"
+	"github.com/l3njo/yap/model"
 	"github.com/labstack/echo/v4"
 	uuid "github.com/satori/go.uuid"
 )
@@ -64,6 +64,7 @@ func GetUserByID(c echo.Context) error {
 }
 
 // UpdateUser handles the "/users/:id/update" route.
+// TODO Check if user in context matches user, else get user from context
 func UpdateUser(c echo.Context) error {
 	resp, status := UserResponse{}, 0
 	user, u := model.User{}, model.User{}
@@ -98,6 +99,7 @@ func UpdateUser(c echo.Context) error {
 }
 
 // AssignUser handles the "/users/:id/assign" route.
+// TODO Check if user in context is keeper
 func AssignUser(c echo.Context) error {
 	resp, status := UserResponse{}, 0
 	user, u := model.User{}, model.User{}
@@ -115,9 +117,20 @@ func AssignUser(c echo.Context) error {
 		return c.JSON(status, resp)
 	}
 
-	if u.Role != model.UserKeeper {
-		keeper := &model.User{Role: model.UserKeeper}
-		count, status, err := model.CountUsers(keeper)
+	user.ID = uuid.FromStringOrNil(c.Param("id"))
+	if uuid.Equal(user.ID, uuid.Nil) {
+		status = http.StatusBadRequest
+		resp.Message = http.StatusText(status)
+		return c.JSON(status, resp)
+	}
+
+	if status, err := user.Read(); err != nil {
+		resp.Message = http.StatusText(status)
+		return c.JSON(status, resp)
+	}
+
+	if u.Role != model.UserKeeper && user.Role == model.UserKeeper {
+		count, status, err := model.CountUsers(&model.User{Role: model.UserKeeper})
 		if err != nil {
 			status = http.StatusInternalServerError
 			resp.Message = http.StatusText(status)
@@ -131,18 +144,6 @@ func AssignUser(c echo.Context) error {
 		}
 	}
 
-	user.ID = uuid.FromStringOrNil(c.Param("id"))
-	if uuid.Equal(user.ID, uuid.Nil) {
-		status = http.StatusBadRequest
-		resp.Message = http.StatusText(status)
-		return c.JSON(status, resp)
-	}
-
-	if status, err := user.Read(); err != nil {
-		resp.Message = http.StatusText(status)
-		return c.JSON(status, resp)
-	}
-
 	user.Role = u.Role
 	status, err := user.Update()
 	if err != nil {
@@ -150,11 +151,13 @@ func AssignUser(c echo.Context) error {
 		return c.JSON(status, resp)
 	}
 
+	user.Pass = ""
 	resp.Status, resp.Message, resp.User = true, http.StatusText(status), user
 	return c.JSON(status, resp)
 }
 
 // DeleteUser handles the "/users/:id/delete" route.
+// TODO Check if user in context matches user, else get user from context
 func DeleteUser(c echo.Context) error {
 	resp, status := UserResponse{}, 0
 	user := model.User{

@@ -3,7 +3,7 @@ package model
 import (
 	"net/http"
 
-	"github.com/l3njo/yap-api/db"
+	"github.com/l3njo/yap/db"
 
 	"github.com/jinzhu/gorm"
 	uuid "github.com/satori/go.uuid"

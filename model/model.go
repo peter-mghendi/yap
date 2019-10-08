@@ -1,7 +1,7 @@
 package model
 
 import (
-	"github.com/l3njo/yap-api/db"
+	"github.com/l3njo/yap/db"
 )
 
 // InitDB connects to and sets up the database

@@ -1,14 +1,15 @@
 package main
 
 import (
+	"log"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 
-	"github.com/l3njo/yap-api/db"
-	"github.com/l3njo/yap-api/handler"
-	"github.com/l3njo/yap-api/model"
+	"github.com/l3njo/yap/db"
+	"github.com/l3njo/yap/handler"
+	"github.com/l3njo/yap/model"
 
 	"github.com/joho/godotenv"
 	"github.com/labstack/echo/v4"
@@ -16,13 +17,14 @@ import (
 )
 
 var (
-	e       *echo.Echo
-	port    string
-	signals chan os.Signal
+	e         *echo.Echo
+	port      string
+	jwtSecret []byte
+	signals   chan os.Signal
 )
 
 func cleanup() {
-	e.Logger.Info("Shutting down server.")
+	log.Println("Shutting down server.")
 	db.DB.Close()
 }
 
@@ -38,10 +40,16 @@ func init() {
 	e = echo.New()
 	Try(godotenv.Load())
 	Try(model.InitDB(os.Getenv("DATABASE_URL")))
+	jwtSecret = []byte(os.Getenv("JWT_SECRET"))
 	port = os.Getenv("PORT")
 }
 
 func main() {
+	jwtConfig := middleware.JWTConfig{
+		Claims:     &handler.JwtCustomClaims{},
+		SigningKey: jwtSecret,
+	}
+
 	e.Pre(middleware.RemoveTrailingSlash())
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
@@ -55,39 +63,62 @@ func main() {
 	u.GET("/:id", handler.GetUserByID)
 	u.POST("/join", handler.JoinUser)
 	u.POST("/auth", handler.AuthUser)
-	u.PUT("/:id/update", handler.UpdateUser)
-	u.PUT("/:id/assign", handler.AssignUser)
-	u.DELETE("/:id/delete", handler.DeleteUser)
+
+	uAuth := u.Group("/:id")
+	uAuth.Use(middleware.JWTWithConfig(jwtConfig))
+	uAuth.PUT("/update", handler.UpdateUser)
+	uAuth.PUT("/assign", handler.AssignUser)
+	uAuth.DELETE("/delete", handler.DeleteUser)
 
 	p := e.Group("/posts")
-	p.DELETE("/:id/delete", handler.DeletePost)
-	p.PUT("/:id/publish", handler.PublishPost)
-	p.PUT("/:id/retract", handler.RetractPost)
+	pAuth := p.Group("/:id")
+	pAuth.Use(middleware.JWTWithConfig(jwtConfig))
+	pAuth.DELETE("/delete", handler.DeletePost)
+	pAuth.PUT("/publish", handler.PublishPost)
+	pAuth.PUT("/retract", handler.RetractPost)
 
 	a := p.Group("/articles")
-	a.GET("", handler.GetArticles)
-	a.GET("/:id", handler.GetArticleByID)
-	a.POST("/create", handler.CreateArticle)
-	a.PUT("/:id/update", handler.UpdateArticle)
+	a.GET("/public", handler.GetPublicArticles)
+	a.GET("/public/:id", handler.GetPublicArticleByID)
+
+	aAuth := a.Group("")
+	aAuth.Use(middleware.JWTWithConfig(jwtConfig))
+	aAuth.GET("", handler.GetArticles)
+	aAuth.GET("/:id", handler.GetArticleByID)
+	aAuth.POST("/create", handler.CreateArticle)
+	aAuth.PUT("/:id/update", handler.UpdateArticle)
 
 	g := p.Group("/galleries")
-	g.GET("", handler.GetGalleries)
-	g.GET("/:id", handler.GetGalleryByID)
-	g.POST("/create", handler.CreateGallery)
-	g.PUT("/:id/update", handler.UpdateGallery)
+	g.GET("/public", handler.GetPublicGalleries)
+	g.GET("/public/:id", handler.GetPublicGalleryByID)
+
+	gAuth := g.Group("")
+	gAuth.Use(middleware.JWTWithConfig(jwtConfig))
+	gAuth.GET("", handler.GetGalleries)
+	gAuth.GET("/:id", handler.GetGalleryByID)
+	gAuth.POST("/create", handler.CreateGallery)
+	gAuth.PUT("/:id/update", handler.UpdateGallery)
 
 	f := p.Group("/flickers")
-	f.GET("", handler.GetFlickers)
-	f.GET("/:id", handler.GetFlickerByID)
-	f.POST("/create", handler.CreateFlicker)
-	f.PUT("/:id/update", handler.UpdateFlicker)
+	f.GET("/public", handler.GetPublicFlickers)
+	f.GET("/public/:id", handler.GetPublicFlickerByID)
+
+	fAuth := f.Group("")
+	fAuth.Use(middleware.JWTWithConfig(jwtConfig))
+	fAuth.GET("", handler.GetFlickers)
+	fAuth.GET("/:id", handler.GetFlickerByID)
+	fAuth.POST("/create", handler.CreateFlicker)
+	fAuth.PUT("/:id/update", handler.UpdateFlicker)
 
 	r := e.Group("/reactions")
 	r.GET("", handler.GetReactions)
 	r.GET("/:id", handler.GetReactionByID)
-	r.POST("/create", handler.CreateReaction)
-	r.PUT("/:id/update", handler.UpdateReaction)
-	r.DELETE("/:id/delete", handler.DeleteReaction)
+
+	rAuth := r.Group("")
+	rAuth.Use(middleware.JWTWithConfig(jwtConfig))
+	rAuth.POST("/create", handler.CreateReaction)
+	rAuth.PUT("/:id/update", handler.UpdateReaction)
+	rAuth.DELETE("/:id/delete", handler.DeleteReaction)
 
 	e.HTTPErrorHandler = func(err error, c echo.Context) {
 		code := http.StatusInternalServerError
@@ -110,6 +141,6 @@ func main() {
 // Try handles top-level errors
 func Try(err error) {
 	if err != nil {
-		e.Logger.Fatal(err)
+		log.Fatalln(err)
 	}
 }

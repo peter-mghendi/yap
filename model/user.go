@@ -4,7 +4,7 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/l3njo/yap-api/db"
+	"github.com/l3njo/yap/db"
 
 	"github.com/jinzhu/gorm"
 	"golang.org/x/crypto/bcrypt"
@@ -36,6 +36,13 @@ const (
 // Create makes a User
 // First user is automatically promoted to "UserKeeper" role
 func (u *User) Create() (int, error) {
+	if num, status, err := CountUsers(&User{Mail: u.Mail}); num > 0 {
+		status := http.StatusBadRequest
+		return status, errors.New(http.StatusText(status))
+	} else if err != nil {
+		return status, err
+	}
+
 	var count int
 	hash, err := bcrypt.GenerateFromPassword([]byte(u.Pass), bcrypt.DefaultCost)
 	if err != nil {
@@ -120,14 +127,14 @@ func (u *User) ValidateAuth() (int, error) {
 		return code, errors.New(http.StatusText(code))
 	}
 
-	return code, errors.New(http.StatusText(code))
+	return code, nil
 }
 
 // TryAuth checks user credentials
 func (u *User) TryAuth() (int, error) {
 	pass := []byte(u.Pass)
 	user := &User{Mail: u.Mail}
-	if err := db.DB.Find(user).Error; gorm.IsRecordNotFoundError(err) {
+	if err := db.DB.Where(user).Find(user).Error; gorm.IsRecordNotFoundError(err) {
 		return http.StatusNotFound, err
 	} else if err != nil {
 		return http.StatusInternalServerError, err

@@ -1,6 +1,7 @@
 package model
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/lib/pq"
@@ -65,5 +66,6 @@ func GetPost(id uuid.UUID) (Post, int, error) {
 		return flicker, status, nil
 	}
 
-	return article, http.StatusNotFound, nil
+	status := http.StatusNotFound
+	return nil, status, errors.New(http.StatusText(status))
 }

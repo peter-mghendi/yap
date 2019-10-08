@@ -44,7 +44,7 @@ func Test_parseDBURL(t *testing.T) {
 	}
 }
 
-func TestInitDB(t *testing.T) {
+func TestInit(t *testing.T) {
 	if e := godotenv.Load("../.env"); e != nil {
 		t.Error(e)
 	}
@@ -70,7 +70,7 @@ func TestInitDB(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if err := InitDB(tt.args.url); (err != nil) != tt.wantErr {
+			if err := Init(tt.args.url); (err != nil) != tt.wantErr {
 				t.Errorf("InitDB() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})

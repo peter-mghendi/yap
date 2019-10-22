@@ -143,7 +143,6 @@ func AssignUser(c echo.Context) error {
 	if u.Role != model.UserKeeper && user.Role == model.UserKeeper {
 		count, status, err := model.CountUsers(&model.User{Role: model.UserKeeper})
 		if err != nil {
-			status = http.StatusInternalServerError
 			resp.Message = http.StatusText(status)
 			return c.JSON(status, resp)
 		}
@@ -194,7 +193,6 @@ func DeleteUser(c echo.Context) error {
 	if user.Role == model.UserKeeper {
 		count, status, err := model.CountUsers(&model.User{Role: model.UserKeeper})
 		if err != nil {
-			status = http.StatusInternalServerError
 			resp.Message = http.StatusText(status)
 			return c.JSON(status, resp)
 		}

@@ -15,6 +15,7 @@ var (
 )
 
 // InitRBAC initializes the Role-Based Access Control
+// HACK error handling
 func InitRBAC() error {
 	var err error
 	rbac := gorbac.New()
@@ -37,11 +38,8 @@ func InitRBAC() error {
 	_ = rbac.Add(roleEditor)
 	_ = rbac.Add(roleKeeper)
 
-	err = rbac.SetParent(string(model.UserEditor), string(model.UserReader))
-	err = rbac.SetParent(string(model.UserKeeper), string(model.UserEditor))
-	if err != nil {
-		return err
-	}
+	_ = rbac.SetParent(string(model.UserEditor), string(model.UserReader))
+	_ = rbac.SetParent(string(model.UserKeeper), string(model.UserEditor))
 
 	RBAC = rbac
 	return err

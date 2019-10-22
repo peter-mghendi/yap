@@ -105,36 +105,7 @@ func DeletePost(c echo.Context) error {
 		return c.JSON(status, resp)
 	}
 
-	switch v := post.(type) {
-	case *model.Article:
-		if v.Creator != claims.User {
-			if (!v.Release && !RBAC.IsGranted(string(claims.Role), permissionDraftOps, nil)) ||
-				(v.Release && !RBAC.IsGranted(string(claims.Role), permissionPostOps, nil)) {
-				status = http.StatusForbidden
-				resp.Message = http.StatusText(status)
-				return c.JSON(status, resp)
-			}
-		}
-	case *model.Gallery:
-		if v.Creator != claims.User {
-			if (!v.Release && !RBAC.IsGranted(string(claims.Role), permissionDraftOps, nil)) ||
-				(v.Release && !RBAC.IsGranted(string(claims.Role), permissionPostOps, nil)) {
-				status = http.StatusForbidden
-				resp.Message = http.StatusText(status)
-				return c.JSON(status, resp)
-			}
-		}
-	case *model.Flicker:
-		if v.Creator != claims.User {
-			if (!v.Release && !RBAC.IsGranted(string(claims.Role), permissionDraftOps, nil)) ||
-				(v.Release && !RBAC.IsGranted(string(claims.Role), permissionPostOps, nil)) {
-				status = http.StatusForbidden
-				resp.Message = http.StatusText(status)
-				return c.JSON(status, resp)
-			}
-		}
-	default:
-		status = http.StatusInternalServerError
+	if status = checkDeletePermissions(post, claims.Role); status != http.StatusOK {
 		resp.Message = http.StatusText(status)
 		return c.JSON(status, resp)
 	}
@@ -147,4 +118,29 @@ func DeletePost(c echo.Context) error {
 
 	resp.Status, resp.Message = true, http.StatusText(status)
 	return c.JSON(status, resp)
+}
+
+// HACK to (temporarily) fix cyclomatic complexity.
+func checkDeletePermissions(post model.Post, role model.UserRole) int {
+	switch v := post.(type) {
+	case *model.Article:
+		if (!v.Release && !RBAC.IsGranted(string(role), permissionDraftOps, nil)) ||
+			(v.Release && !RBAC.IsGranted(string(role), permissionPostOps, nil)) {
+			return http.StatusForbidden
+		}
+	case *model.Gallery:
+		if (!v.Release && !RBAC.IsGranted(string(role), permissionDraftOps, nil)) ||
+			(v.Release && !RBAC.IsGranted(string(role), permissionPostOps, nil)) {
+			return http.StatusForbidden
+		}
+	case *model.Flicker:
+		if (!v.Release && !RBAC.IsGranted(string(role), permissionDraftOps, nil)) ||
+			(v.Release && !RBAC.IsGranted(string(role), permissionPostOps, nil)) {
+			return http.StatusForbidden
+		}
+	default:
+		return http.StatusInternalServerError
+	}
+
+	return http.StatusOK
 }

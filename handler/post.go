@@ -16,16 +16,21 @@ type PostResponse struct {
 	model.Post `json:"data"`
 }
 
-// PublishPost handles the "/posts/:id/publish" route.
+// PublishPost handles the "/blog/posts/:id/publish" route.
 func PublishPost(c echo.Context) error {
 	userToken := c.Get("user").(*jwt.Token)
 	claims := userToken.Claims.(*JwtCustomClaims)
-	_, _ = claims.User, claims.Role // TODO
 
 	resp, status := PostResponse{}, 0
 	id := uuid.FromStringOrNil(c.Param("id"))
 	if uuid.Equal(id, uuid.Nil) {
 		status = http.StatusBadRequest
+		resp.Message = http.StatusText(status)
+		return c.JSON(status, resp)
+	}
+
+	if !RBAC.IsGranted(string(claims.Role), permissionPostOps, nil) {
+		status = http.StatusForbidden
 		resp.Message = http.StatusText(status)
 		return c.JSON(status, resp)
 	}
@@ -46,16 +51,21 @@ func PublishPost(c echo.Context) error {
 	return c.JSON(status, resp)
 }
 
-// RetractPost handles the "/posts/:id/retract" route.
+// RetractPost handles the "/blog/posts/:id/retract" route.
 func RetractPost(c echo.Context) error {
 	userToken := c.Get("user").(*jwt.Token)
 	claims := userToken.Claims.(*JwtCustomClaims)
-	_, _ = claims.User, claims.Role // TODO
 
 	resp, status := PostResponse{}, 0
 	id := uuid.FromStringOrNil(c.Param("id"))
 	if uuid.Equal(id, uuid.Nil) {
 		status = http.StatusBadRequest
+		resp.Message = http.StatusText(status)
+		return c.JSON(status, resp)
+	}
+
+	if !RBAC.IsGranted(string(claims.Role), permissionPostOps, nil) {
+		status = http.StatusForbidden
 		resp.Message = http.StatusText(status)
 		return c.JSON(status, resp)
 	}
@@ -76,11 +86,10 @@ func RetractPost(c echo.Context) error {
 	return c.JSON(status, resp)
 }
 
-// DeletePost handles the "/posts/:id/delete" route.
+// DeletePost handles the "/blog/posts/:id/delete" route.
 func DeletePost(c echo.Context) error {
 	userToken := c.Get("user").(*jwt.Token)
 	claims := userToken.Claims.(*JwtCustomClaims)
-	_, _ = claims.User, claims.Role // TODO
 
 	resp, status := PostResponse{}, 0
 	id := uuid.FromStringOrNil(c.Param("id"))
@@ -92,6 +101,40 @@ func DeletePost(c echo.Context) error {
 
 	post, status, err := model.GetPost(id)
 	if err != nil {
+		resp.Message = http.StatusText(status)
+		return c.JSON(status, resp)
+	}
+
+	switch v := post.(type) {
+	case *model.Article:
+		if v.Creator != claims.User {
+			if (!v.Release && !RBAC.IsGranted(string(claims.Role), permissionDraftOps, nil)) ||
+				(v.Release && !RBAC.IsGranted(string(claims.Role), permissionPostOps, nil)) {
+				status = http.StatusForbidden
+				resp.Message = http.StatusText(status)
+				return c.JSON(status, resp)
+			}
+		}
+	case *model.Gallery:
+		if v.Creator != claims.User {
+			if (!v.Release && !RBAC.IsGranted(string(claims.Role), permissionDraftOps, nil)) ||
+				(v.Release && !RBAC.IsGranted(string(claims.Role), permissionPostOps, nil)) {
+				status = http.StatusForbidden
+				resp.Message = http.StatusText(status)
+				return c.JSON(status, resp)
+			}
+		}
+	case *model.Flicker:
+		if v.Creator != claims.User {
+			if (!v.Release && !RBAC.IsGranted(string(claims.Role), permissionDraftOps, nil)) ||
+				(v.Release && !RBAC.IsGranted(string(claims.Role), permissionPostOps, nil)) {
+				status = http.StatusForbidden
+				resp.Message = http.StatusText(status)
+				return c.JSON(status, resp)
+			}
+		}
+	default:
+		status = http.StatusInternalServerError
 		resp.Message = http.StatusText(status)
 		return c.JSON(status, resp)
 	}

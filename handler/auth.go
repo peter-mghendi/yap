@@ -102,8 +102,11 @@ func AuthUser(c echo.Context) error {
 	return c.JSON(status, resp)
 }
 
-// UpdatePass handles the "/users/:id/change" route.
+// UpdatePass handles the "/users/me/change" route.
 func UpdatePass(c echo.Context) error {
+	userToken := c.Get("user").(*jwt.Token)
+	claims := userToken.Claims.(*JwtCustomClaims)
+
 	resp, status := UserResponse{}, 0
 	user, u := model.User{}, map[string]string{}
 	if err := c.Bind(&u); err != nil {
@@ -118,9 +121,14 @@ func UpdatePass(c echo.Context) error {
 		return c.JSON(status, resp)
 	}
 
-	user.ID = uuid.FromStringOrNil(c.Param("id"))
+	user.ID = claims.User
 	if uuid.Equal(user.ID, uuid.Nil) {
 		status = http.StatusBadRequest
+		resp.Message = http.StatusText(status)
+		return c.JSON(status, resp)
+	}
+
+	if status, err := user.Read(); err != nil {
 		resp.Message = http.StatusText(status)
 		return c.JSON(status, resp)
 	}

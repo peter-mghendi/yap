@@ -16,7 +16,7 @@ type ArticlesResponse struct {
 	Articles []model.Article `json:"data"`
 }
 
-// GetArticles handles the "/posts/articles" route.
+// GetArticles handles the "/blog/posts/articles" route.
 func GetArticles(c echo.Context) error {
 	resp, status := ArticlesResponse{}, 0
 	articles, status, err := model.ReadAllArticles()
@@ -29,7 +29,7 @@ func GetArticles(c echo.Context) error {
 	return c.JSON(status, resp)
 }
 
-// GetPublicArticles handles the "/posts/articles/public" route.
+// GetPublicArticles handles the "/blog/posts/articles/public" route.
 func GetPublicArticles(c echo.Context) error {
 	resp, status := ArticlesResponse{}, 0
 	articles, status, err := model.ReadAllArticles()
@@ -46,7 +46,7 @@ func GetPublicArticles(c echo.Context) error {
 	return c.JSON(status, resp)
 }
 
-// GetArticleByID handles the "/posts/articles/:id" route.
+// GetArticleByID handles the "/blog/posts/articles/:id" route.
 func GetArticleByID(c echo.Context) error {
 	resp, status := PostResponse{}, 0
 	id := uuid.FromStringOrNil(c.Param("id"))
@@ -72,7 +72,7 @@ func GetArticleByID(c echo.Context) error {
 	return c.JSON(status, resp)
 }
 
-// GetPublicArticleByID handles the "/posts/articles/public/:id" route.
+// GetPublicArticleByID handles the "/blog/posts/articles/public/:id" route.
 func GetPublicArticleByID(c echo.Context) error {
 	resp, status := PostResponse{}, 0
 	id := uuid.FromStringOrNil(c.Param("id"))
@@ -104,11 +104,10 @@ func GetPublicArticleByID(c echo.Context) error {
 	return c.JSON(status, resp)
 }
 
-// CreateArticle handles the "/posts/articles/create" route.
+// CreateArticle handles the "/blog/posts/articles/create" route.
 func CreateArticle(c echo.Context) error {
 	userToken := c.Get("user").(*jwt.Token)
 	claims := userToken.Claims.(*JwtCustomClaims)
-	user, _ := claims.User, claims.Role // TODO
 
 	resp, status := PostResponse{}, 0
 	article := &model.Article{}
@@ -118,7 +117,13 @@ func CreateArticle(c echo.Context) error {
 		return c.JSON(status, resp)
 	}
 
-	article.Creator = user
+	if !RBAC.IsGranted(string(claims.Role), permissionDraftOps, nil) {
+		status = http.StatusForbidden
+		resp.Message = http.StatusText(status)
+		return c.JSON(status, resp)
+	}
+
+	article.Creator = claims.User
 	if status, err := article.Create(); err != nil {
 		resp.Message = http.StatusText(status)
 		return c.JSON(status, resp)
@@ -128,11 +133,10 @@ func CreateArticle(c echo.Context) error {
 	return c.JSON(status, resp)
 }
 
-// UpdateArticle handles the "/posts/articles/:id/update" route.
+// UpdateArticle handles the "/blog/posts/articles/:id/update" route.
 func UpdateArticle(c echo.Context) error {
 	userToken := c.Get("user").(*jwt.Token)
 	claims := userToken.Claims.(*JwtCustomClaims)
-	_, _ = claims.User, claims.Role // TODO
 
 	resp, status := PostResponse{}, 0
 	article, a := &model.Article{}, &model.Article{}
@@ -154,7 +158,67 @@ func UpdateArticle(c echo.Context) error {
 		return c.JSON(status, resp)
 	}
 
+	if article.Creator != claims.User {
+		if (!article.Release && !RBAC.IsGranted(string(claims.Role), permissionDraftOps, nil)) ||
+			(article.Release && !RBAC.IsGranted(string(claims.Role), permissionPostOps, nil)) {
+			status = http.StatusForbidden
+			resp.Message = http.StatusText(status)
+			return c.JSON(status, resp)
+		}
+	}
+
 	article.PostBase, article.Content = a.PostBase, a.Content
+	status, err := article.Update()
+	if err != nil {
+		resp.Message = http.StatusText(status)
+		return c.JSON(status, resp)
+	}
+
+	resp.Status, resp.Message, resp.Post = true, http.StatusText(status), article
+	return c.JSON(status, resp)
+}
+
+// TransferArticle handles the "/blog/posts/articles/:id/transfer" route.
+func TransferArticle(c echo.Context) error {
+	userToken := c.Get("user").(*jwt.Token)
+	claims := userToken.Claims.(*JwtCustomClaims)
+
+	resp, status := PostResponse{}, 0
+	article, a := &model.Article{}, &model.Article{}
+	if err := c.Bind(a); err != nil {
+		status = http.StatusBadRequest
+		resp.Message = http.StatusText(status)
+		return c.JSON(status, resp)
+	}
+
+	article.ID = uuid.FromStringOrNil(c.Param("id"))
+	if uuid.Equal(article.ID, uuid.Nil) {
+		status = http.StatusBadRequest
+		resp.Message = http.StatusText(status)
+		return c.JSON(status, resp)
+	}
+
+	if status, err := article.Read(); err != nil {
+		resp.Message = http.StatusText(status)
+		return c.JSON(status, resp)
+	}
+
+	if article.Creator != claims.User {
+		if (!article.Release && !RBAC.IsGranted(string(claims.Role), permissionDraftOps, nil)) ||
+			(article.Release && !RBAC.IsGranted(string(claims.Role), permissionPostOps, nil)) {
+			status = http.StatusForbidden
+			resp.Message = http.StatusText(status)
+			return c.JSON(status, resp)
+		}
+	}
+
+	if uuid.Equal(article.Creator, a.Creator) {
+		status = http.StatusNotModified
+		resp.Message = http.StatusText(status)
+		return c.JSON(status, resp)
+	}
+
+	article.Creator = a.Creator
 	status, err := article.Update()
 	if err != nil {
 		resp.Message = http.StatusText(status)

@@ -58,6 +58,7 @@ func (g *Gallery) Update() (int, error) {
 			Summary: g.Summary,
 			Overlay: g.Overlay,
 			Section: g.Section,
+			Creator: g.Creator,
 			Markers: g.Markers,
 		},
 		Content: g.Content,

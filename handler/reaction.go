@@ -5,6 +5,7 @@ import (
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/l3njo/yap/model"
+	"github.com/l3njo/yap/util"
 	uuid "github.com/satori/go.uuid"
 
 	"github.com/labstack/echo/v4"
@@ -22,8 +23,8 @@ type ReactionsResponse struct {
 	Reactions []model.Reaction `json:"data"`
 }
 
-// GetReactions handles the "/reactions" route.
-func GetReactions(c echo.Context) error {
+// GetBlogPostReactions handles the "/blog/posts/:id/reactions" route.
+func GetBlogPostReactions(c echo.Context) error {
 	resp, status := ReactionsResponse{}, 0
 	reactions, status, err := model.ReadAllReactions()
 	if err != nil {
@@ -31,12 +32,47 @@ func GetReactions(c echo.Context) error {
 		return c.JSON(status, resp)
 	}
 
+	post := uuid.FromStringOrNil(c.Param("id"))
+	if uuid.Equal(uuid.Nil, post) {
+		status = http.StatusBadRequest
+		resp.Message = http.StatusText(status)
+		return c.JSON(status, resp)
+	}
+
+	reactions = util.FilterR(reactions, func(r model.Reaction) bool {
+		return (r.Site == "blog") && (r.Post == post)
+	})
+
 	resp.Status, resp.Message, resp.Reactions = true, http.StatusText(status), reactions
 	return c.JSON(status, resp)
 }
 
-// GetReactionByID handles the "/reactions/:id" route.
-func GetReactionByID(c echo.Context) error {
+// GetUserBlogReactions handles the "/users/:id/blog/reactions" route.
+func GetUserBlogReactions(c echo.Context) error {
+	resp, status := ReactionsResponse{}, 0
+	reactions, status, err := model.ReadAllReactions()
+	if err != nil {
+		resp.Message = http.StatusText(status)
+		return c.JSON(status, resp)
+	}
+
+	user := uuid.FromStringOrNil(c.Param("id"))
+	if uuid.Equal(uuid.Nil, user) {
+		status = http.StatusBadRequest
+		resp.Message = http.StatusText(status)
+		return c.JSON(status, resp)
+	}
+
+	reactions = util.FilterR(reactions, func(r model.Reaction) bool {
+		return (r.Site == "blog") && (r.User == user)
+	})
+
+	resp.Status, resp.Message, resp.Reactions = true, http.StatusText(status), reactions
+	return c.JSON(status, resp)
+}
+
+// GetBlogReactionByID handles the "/blog/reactions/:id" route.
+func GetBlogReactionByID(c echo.Context) error {
 	resp, status := ReactionResponse{}, 0
 	id := uuid.FromStringOrNil(c.Param("id"))
 	if uuid.Equal(id, uuid.Nil) {
@@ -55,15 +91,20 @@ func GetReactionByID(c echo.Context) error {
 		return c.JSON(status, resp)
 	}
 
+	if reaction.Site != "blog" {
+		status = http.StatusNotFound
+		resp.Message = http.StatusText(status)
+		return c.JSON(status, resp)
+	}
+
 	resp.Status, resp.Message, resp.Reaction = true, http.StatusText(status), reaction
 	return c.JSON(status, resp)
 }
 
-// CreateReaction handles the "/reactions/create" route.
-func CreateReaction(c echo.Context) error {
+// CreateBlogReaction handles the "/blog/reactions/create" route.
+func CreateBlogReaction(c echo.Context) error {
 	userToken := c.Get("user").(*jwt.Token)
 	claims := userToken.Claims.(*JwtCustomClaims)
-	user := claims.User
 
 	resp, status := ReactionResponse{}, 0
 	reaction := model.Reaction{}
@@ -73,7 +114,15 @@ func CreateReaction(c echo.Context) error {
 		return c.JSON(status, resp)
 	}
 
-	reaction.User = user
+	reaction.Site = "blog"
+	post := uuid.FromStringOrNil(c.Param("id"))
+	if uuid.Equal(uuid.Nil, post) {
+		status = http.StatusBadRequest
+		resp.Message = http.StatusText(status)
+		return c.JSON(status, resp)
+	}
+
+	reaction.User, reaction.Post = claims.User, post
 	if status, err := reaction.Create(); err != nil {
 		resp.Message = http.StatusText(status)
 		return c.JSON(status, resp)
@@ -83,9 +132,11 @@ func CreateReaction(c echo.Context) error {
 	return c.JSON(status, resp)
 }
 
-// UpdateReaction handles the "/reactions/:id/update" route.
-// TODO Ensure reaction belongs to auth'ed user
-func UpdateReaction(c echo.Context) error {
+// UpdateBlogReaction handles the "/blog/reactions/:id/update" route.
+func UpdateBlogReaction(c echo.Context) error {
+	userToken := c.Get("user").(*jwt.Token)
+	claims := userToken.Claims.(*JwtCustomClaims)
+
 	resp, status := ReactionResponse{}, 0
 	reaction, r := model.Reaction{}, model.Reaction{}
 	if err := c.Bind(&r); err != nil {
@@ -106,6 +157,18 @@ func UpdateReaction(c echo.Context) error {
 		return c.JSON(status, resp)
 	}
 
+	if reaction.Site != "blog" {
+		status = http.StatusNotFound
+		resp.Message = http.StatusText(status)
+		return c.JSON(status, resp)
+	}
+
+	if reaction.User != claims.User {
+		status = http.StatusForbidden
+		resp.Message = http.StatusText(status)
+		return c.JSON(status, resp)
+	}
+
 	reaction.Text = r.Text
 	status, err := reaction.Update()
 	if err != nil {
@@ -117,15 +180,35 @@ func UpdateReaction(c echo.Context) error {
 	return c.JSON(status, resp)
 }
 
-// DeleteReaction handles the "/reactions/:id/delete" route.
-// TODO Ensure reaction belongs to auth'ed user
-func DeleteReaction(c echo.Context) error {
+// DeleteBlogReaction handles the "/blog/reactions/:id/delete" route.
+func DeleteBlogReaction(c echo.Context) error {
+	userToken := c.Get("user").(*jwt.Token)
+	claims := userToken.Claims.(*JwtCustomClaims)
+
 	resp, status := ReactionResponse{}, 0
 	reaction := model.Reaction{
 		Base: model.Base{ID: uuid.FromStringOrNil(c.Param("id"))},
 	}
 
-	status, err := reaction.Delete()
+	status, err := reaction.Read()
+	if err != nil {
+		resp.Message = http.StatusText(status)
+		return c.JSON(status, resp)
+	}
+
+	if reaction.Site != "blog" {
+		status = http.StatusNotFound
+		resp.Message = http.StatusText(status)
+		return c.JSON(status, resp)
+	}
+
+	if !RBAC.IsGranted(string(claims.Role), permissionReactionOps, nil) && !uuid.Equal(claims.User, reaction.User) {
+		status = http.StatusForbidden
+		resp.Message = http.StatusText(status)
+		return c.JSON(status, resp)
+	}
+
+	status, err = reaction.Delete()
 	if err != nil {
 		resp.Message = http.StatusText(status)
 		return c.JSON(status, resp)

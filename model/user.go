@@ -109,6 +109,26 @@ func (u *User) Update() (int, error) {
 
 // Delete removes a User
 func (u *User) Delete() (int, error) {
+	postBase := PostBase{
+		Creator: u.ID,
+	}
+
+	if err := db.DB.Delete(&Article{PostBase: postBase}).Error; err != nil {
+		return http.StatusInternalServerError, err
+	}
+
+	if err := db.DB.Delete(&Gallery{PostBase: postBase}).Error; err != nil {
+		return http.StatusInternalServerError, err
+	}
+
+	if err := db.DB.Delete(&Flicker{PostBase: postBase}).Error; err != nil {
+		return http.StatusInternalServerError, err
+	}
+
+	if err := db.DB.Delete(&Reaction{User: u.ID}).Error; err != nil {
+		return http.StatusInternalServerError, err
+	}
+
 	db := db.DB.Delete(u)
 	if num, err := db.RowsAffected, db.Error; num == 0 {
 		return http.StatusNotFound, gorm.ErrRecordNotFound

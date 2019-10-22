@@ -38,8 +38,9 @@ func init() {
 	}()
 
 	e = echo.New()
-	Try(godotenv.Load())
-	Try(model.InitDB(os.Getenv("DATABASE_URL")))
+	try(godotenv.Load())
+	try(model.InitDB(os.Getenv("DATABASE_URL")))
+	try(handler.InitRBAC())
 	jwtSecret = []byte(os.Getenv("JWT_SECRET"))
 	port = os.Getenv("PORT")
 }
@@ -63,19 +64,29 @@ func main() {
 	u.GET("/:id", handler.GetUserByID)
 	u.POST("/join", handler.JoinUser)
 	u.POST("/auth", handler.AuthUser)
+	u.GET("/:id/blog/reactions", handler.GetUserBlogReactions)
 
-	uAuth := u.Group("/:id")
+	uAuth := u.Group("/restricted")
 	uAuth.Use(middleware.JWTWithConfig(jwtConfig))
-	uAuth.PUT("/update", handler.UpdateUser)
-	uAuth.PUT("/assign", handler.AssignUser)
-	uAuth.DELETE("/delete", handler.DeleteUser)
+	uAuth.PUT("/me/update", handler.UpdateUser)
+	uAuth.PUT("/me/change", handler.UpdatePass)
+	uAuth.PUT("/:id/assign", handler.AssignUser)
+	uAuth.DELETE("/:id/delete", handler.DeleteUser)
 
-	p := e.Group("/posts")
+	p := e.Group("/blog/posts")
 	pAuth := p.Group("/:id")
 	pAuth.Use(middleware.JWTWithConfig(jwtConfig))
 	pAuth.DELETE("/delete", handler.DeletePost)
 	pAuth.PUT("/publish", handler.PublishPost)
 	pAuth.PUT("/retract", handler.RetractPost)
+
+	pr := p.Group("/:id/reactions")
+
+	pr.GET("", handler.GetBlogPostReactions)
+
+	prAuth := pr.Group("/create")
+	prAuth.Use(middleware.JWTWithConfig(jwtConfig))
+	prAuth.POST("", handler.CreateBlogReaction)
 
 	a := p.Group("/articles")
 	a.GET("/public", handler.GetPublicArticles)
@@ -87,6 +98,7 @@ func main() {
 	aAuth.GET("/:id", handler.GetArticleByID)
 	aAuth.POST("/create", handler.CreateArticle)
 	aAuth.PUT("/:id/update", handler.UpdateArticle)
+	aAuth.PUT("/:id/transfer", handler.TransferArticle)
 
 	g := p.Group("/galleries")
 	g.GET("/public", handler.GetPublicGalleries)
@@ -98,6 +110,7 @@ func main() {
 	gAuth.GET("/:id", handler.GetGalleryByID)
 	gAuth.POST("/create", handler.CreateGallery)
 	gAuth.PUT("/:id/update", handler.UpdateGallery)
+	gAuth.PUT("/:id/transfer", handler.TransferGallery)
 
 	f := p.Group("/flickers")
 	f.GET("/public", handler.GetPublicFlickers)
@@ -109,16 +122,15 @@ func main() {
 	fAuth.GET("/:id", handler.GetFlickerByID)
 	fAuth.POST("/create", handler.CreateFlicker)
 	fAuth.PUT("/:id/update", handler.UpdateFlicker)
+	fAuth.PUT("/:id/transfer", handler.TransferFlicker)
 
-	r := e.Group("/reactions")
-	r.GET("", handler.GetReactions)
-	r.GET("/:id", handler.GetReactionByID)
+	br := e.Group("/blog/reactions")
+	br.GET("/:id", handler.GetBlogReactionByID)
 
-	rAuth := r.Group("")
-	rAuth.Use(middleware.JWTWithConfig(jwtConfig))
-	rAuth.POST("/create", handler.CreateReaction)
-	rAuth.PUT("/:id/update", handler.UpdateReaction)
-	rAuth.DELETE("/:id/delete", handler.DeleteReaction)
+	brAuth := br.Group("")
+	brAuth.Use(middleware.JWTWithConfig(jwtConfig))
+	brAuth.PUT("/:id/update", handler.UpdateBlogReaction)
+	brAuth.DELETE("/:id/delete", handler.DeleteBlogReaction)
 
 	e.HTTPErrorHandler = func(err error, c echo.Context) {
 		code := http.StatusInternalServerError
@@ -138,8 +150,8 @@ func main() {
 	e.Logger.Fatal(e.Start(":" + port))
 }
 
-// Try handles top-level errors
-func Try(err error) {
+// try handles top-level errors
+func try(err error) {
 	if err != nil {
 		log.Fatalln(err)
 	}

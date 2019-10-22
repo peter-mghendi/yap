@@ -3,6 +3,7 @@ package handler
 import (
 	"net/http"
 
+	"github.com/dgrijalva/jwt-go"
 	"github.com/l3njo/yap/model"
 	"github.com/labstack/echo/v4"
 	uuid "github.com/satori/go.uuid"
@@ -63,9 +64,11 @@ func GetUserByID(c echo.Context) error {
 	return c.JSON(status, resp)
 }
 
-// UpdateUser handles the "/users/:id/update" route.
-// TODO Check if user in context matches user, else get user from context
+// UpdateUser handles the "/users/me/update" route.
 func UpdateUser(c echo.Context) error {
+	userToken := c.Get("user").(*jwt.Token)
+	claims := userToken.Claims.(*JwtCustomClaims)
+
 	resp, status := UserResponse{}, 0
 	user, u := model.User{}, model.User{}
 	if err := c.Bind(&u); err != nil {
@@ -74,7 +77,7 @@ func UpdateUser(c echo.Context) error {
 		return c.JSON(status, resp)
 	}
 
-	user.ID = uuid.FromStringOrNil(c.Param("id"))
+	user.ID = claims.User
 	if uuid.Equal(user.ID, uuid.Nil) {
 		status = http.StatusBadRequest
 		resp.Message = http.StatusText(status)
@@ -99,12 +102,20 @@ func UpdateUser(c echo.Context) error {
 }
 
 // AssignUser handles the "/users/:id/assign" route.
-// TODO Check if user in context is keeper
 func AssignUser(c echo.Context) error {
+	userToken := c.Get("user").(*jwt.Token)
+	claims := userToken.Claims.(*JwtCustomClaims)
+
 	resp, status := UserResponse{}, 0
 	user, u := model.User{}, model.User{}
 	if err := c.Bind(&u); err != nil {
 		status = http.StatusBadRequest
+		resp.Message = http.StatusText(status)
+		return c.JSON(status, resp)
+	}
+
+	if !RBAC.IsGranted(string(claims.Role), permissionUserOps, nil) {
+		status := http.StatusForbidden
 		resp.Message = http.StatusText(status)
 		return c.JSON(status, resp)
 	}
@@ -157,11 +168,21 @@ func AssignUser(c echo.Context) error {
 }
 
 // DeleteUser handles the "/users/:id/delete" route.
-// TODO Check if user in context matches user, else get user from context
 func DeleteUser(c echo.Context) error {
+	userToken := c.Get("user").(*jwt.Token)
+	claims := userToken.Claims.(*JwtCustomClaims)
+
+	userID := uuid.FromStringOrNil(c.Param("id"))
 	resp, status := UserResponse{}, 0
+
+	if !RBAC.IsGranted(string(claims.Role), permissionUserOps, nil) && !uuid.Equal(claims.User, userID) {
+		status := http.StatusForbidden
+		resp.Message = http.StatusText(status)
+		return c.JSON(status, resp)
+	}
+
 	user := model.User{
-		Base: model.Base{ID: uuid.FromStringOrNil(c.Param("id"))},
+		Base: model.Base{ID: userID},
 	}
 
 	status, err := user.Read()

@@ -55,6 +55,7 @@ func (a *Article) Update() (int, error) {
 			Summary: a.Summary,
 			Overlay: a.Overlay,
 			Section: a.Section,
+			Creator: a.Creator,
 			Markers: a.Markers,
 		},
 		Content: a.Content,

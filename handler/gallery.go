@@ -3,6 +3,7 @@ package handler
 import (
 	"net/http"
 
+	"github.com/dgrijalva/jwt-go"
 	"github.com/l3njo/yap/model"
 	"github.com/l3njo/yap/util"
 	"github.com/labstack/echo/v4"
@@ -15,7 +16,7 @@ type GalleriesResponse struct {
 	Galleries []model.Gallery `json:"data"`
 }
 
-// GetGalleries handles the "/posts/galleries" route.
+// GetGalleries handles the "/blog/posts/galleries" route.
 func GetGalleries(c echo.Context) error {
 	resp, status := GalleriesResponse{}, 0
 	galleries, status, err := model.ReadAllGalleries()
@@ -28,7 +29,7 @@ func GetGalleries(c echo.Context) error {
 	return c.JSON(status, resp)
 }
 
-// GetPublicGalleries handles the "/posts/galleries/public" route.
+// GetPublicGalleries handles the "/blog/posts/galleries/public" route.
 func GetPublicGalleries(c echo.Context) error {
 	resp, status := GalleriesResponse{}, 0
 	galleries, status, err := model.ReadAllGalleries()
@@ -45,7 +46,7 @@ func GetPublicGalleries(c echo.Context) error {
 	return c.JSON(status, resp)
 }
 
-// GetGalleryByID handles the "/posts/galleries/:id" route.
+// GetGalleryByID handles the "/blog/posts/galleries/:id" route.
 func GetGalleryByID(c echo.Context) error {
 	resp, status := PostResponse{}, 0
 	id := uuid.FromStringOrNil(c.Param("id"))
@@ -71,7 +72,7 @@ func GetGalleryByID(c echo.Context) error {
 	return c.JSON(status, resp)
 }
 
-// GetPublicGalleryByID handles the "/posts/galleries/public/:id" route.
+// GetPublicGalleryByID handles the "/blog/posts/galleries/public/:id" route.
 func GetPublicGalleryByID(c echo.Context) error {
 	resp, status := PostResponse{}, 0
 	id := uuid.FromStringOrNil(c.Param("id"))
@@ -103,8 +104,11 @@ func GetPublicGalleryByID(c echo.Context) error {
 	return c.JSON(status, resp)
 }
 
-// CreateGallery handles the "/posts/galleries/create" route.
+// CreateGallery handles the "/blog/posts/galleries/create" route.
 func CreateGallery(c echo.Context) error {
+	userToken := c.Get("user").(*jwt.Token)
+	claims := userToken.Claims.(*JwtCustomClaims)
+
 	resp, status := PostResponse{}, 0
 	gallery := &model.Gallery{}
 	if err := c.Bind(gallery); err != nil {
@@ -113,6 +117,13 @@ func CreateGallery(c echo.Context) error {
 		return c.JSON(status, resp)
 	}
 
+	if !RBAC.IsGranted(string(claims.Role), permissionDraftOps, nil) {
+		status = http.StatusForbidden
+		resp.Message = http.StatusText(status)
+		return c.JSON(status, resp)
+	}
+
+	gallery.Creator = claims.User
 	if status, err := gallery.Create(); err != nil {
 		resp.Message = http.StatusText(status)
 		return c.JSON(status, resp)
@@ -122,8 +133,11 @@ func CreateGallery(c echo.Context) error {
 	return c.JSON(status, resp)
 }
 
-// UpdateGallery handles the "/posts/galleries/:id/update" route.
+// UpdateGallery handles the "/blog/posts/galleries/:id/update" route.
 func UpdateGallery(c echo.Context) error {
+	userToken := c.Get("user").(*jwt.Token)
+	claims := userToken.Claims.(*JwtCustomClaims)
+
 	resp, status := PostResponse{}, 0
 	gallery, g := &model.Gallery{}, &model.Gallery{}
 	if err := c.Bind(g); err != nil {
@@ -144,7 +158,67 @@ func UpdateGallery(c echo.Context) error {
 		return c.JSON(status, resp)
 	}
 
+	if gallery.Creator != claims.User {
+		if (!gallery.Release && !RBAC.IsGranted(string(claims.Role), permissionDraftOps, nil)) ||
+			(gallery.Release && !RBAC.IsGranted(string(claims.Role), permissionPostOps, nil)) {
+			status = http.StatusForbidden
+			resp.Message = http.StatusText(status)
+			return c.JSON(status, resp)
+		}
+	}
+
 	gallery.PostBase, gallery.Content, gallery.Caption = g.PostBase, g.Content, g.Caption
+	status, err := gallery.Update()
+	if err != nil {
+		resp.Message = http.StatusText(status)
+		return c.JSON(status, resp)
+	}
+
+	resp.Status, resp.Message, resp.Post = true, http.StatusText(status), gallery
+	return c.JSON(status, resp)
+}
+
+// TransferGallery handles the "/blog/posts/galleries/:id/transfer" route.
+func TransferGallery(c echo.Context) error {
+	userToken := c.Get("user").(*jwt.Token)
+	claims := userToken.Claims.(*JwtCustomClaims)
+
+	resp, status := PostResponse{}, 0
+	gallery, g := &model.Gallery{}, &model.Gallery{}
+	if err := c.Bind(g); err != nil {
+		status = http.StatusBadRequest
+		resp.Message = http.StatusText(status)
+		return c.JSON(status, resp)
+	}
+
+	gallery.ID = uuid.FromStringOrNil(c.Param("id"))
+	if uuid.Equal(gallery.ID, uuid.Nil) {
+		status = http.StatusBadRequest
+		resp.Message = http.StatusText(status)
+		return c.JSON(status, resp)
+	}
+
+	if status, err := gallery.Read(); err != nil {
+		resp.Message = http.StatusText(status)
+		return c.JSON(status, resp)
+	}
+
+	if gallery.Creator != claims.User {
+		if (!gallery.Release && !RBAC.IsGranted(string(claims.Role), permissionDraftOps, nil)) ||
+			(gallery.Release && !RBAC.IsGranted(string(claims.Role), permissionPostOps, nil)) {
+			status = http.StatusForbidden
+			resp.Message = http.StatusText(status)
+			return c.JSON(status, resp)
+		}
+	}
+
+	if uuid.Equal(gallery.Creator, g.Creator) {
+		status = http.StatusNotModified
+		resp.Message = http.StatusText(status)
+		return c.JSON(status, resp)
+	}
+
+	gallery.Creator = g.Creator
 	status, err := gallery.Update()
 	if err != nil {
 		resp.Message = http.StatusText(status)

@@ -36,3 +36,14 @@ func FilterF(vs []model.Flicker, f func(model.Flicker) bool) []model.Flicker {
 	}
 	return vsf
 }
+
+// FilterR returns a new slice of reactions that satisfy the predicate f.
+func FilterR(vs []model.Reaction, f func(model.Reaction) bool) []model.Reaction {
+	vsf := []model.Reaction{}
+	for _, v := range vs {
+		if f(v) {
+			vsf = append(vsf, v)
+		}
+	}
+	return vsf
+}

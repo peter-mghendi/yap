@@ -42,6 +42,7 @@ func (r *Reaction) Create() (int, error) {
 	return http.StatusCreated, nil
 }
 
+// Read returns an existing reaction
 func (r *Reaction) Read() (int, error) {
 	if err := db.DB.First(r).Error; gorm.IsRecordNotFoundError(err) {
 		return http.StatusNotFound, err

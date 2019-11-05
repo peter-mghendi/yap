@@ -45,6 +45,11 @@ func init() {
 	port = os.Getenv("PORT")
 }
 
+/* TODO
+1. Forum
+2. Relational data
+3. User actions
+*/
 func main() {
 	jwtConfig := middleware.JWTConfig{
 		Claims:     &handler.JwtCustomClaims{},
@@ -64,7 +69,11 @@ func main() {
 	u.GET("/:id", handler.GetUserByID)
 	u.POST("/join", handler.JoinUser)
 	u.POST("/auth", handler.AuthUser)
+	// u.GET("/:id/blog/posts", handler.GetUserBlogPosts) // TODO
 	u.GET("/:id/blog/reactions", handler.GetUserBlogReactions)
+	// u.GET("/:id/forum/reactions", handler.GetUserForumReactions) // TODO
+	// u.GET("/:id/forum/questions", handler.GetUserForumQuestions) // TODO
+	// u.GET("/:id/forum/responses", handler.GetUserForumResponses) // TODO
 
 	uAuth := u.Group("/restricted")
 	uAuth.Use(middleware.JWTWithConfig(jwtConfig))
@@ -73,7 +82,15 @@ func main() {
 	uAuth.PUT("/:id/assign", handler.AssignUser)
 	uAuth.DELETE("/:id/delete", handler.DeleteUser)
 
-	p := e.Group("/blog/posts")
+	/* TODO
+	1. RSS Feeds
+	2. All posts
+	3. Search
+	*/
+	blog := e.Group("/blog")
+	// blog.GET("/feed", handler.GetFeed) // TODO
+
+	p := blog.Group("/posts")
 	pAuth := p.Group("/:id")
 	pAuth.Use(middleware.JWTWithConfig(jwtConfig))
 	pAuth.DELETE("/delete", handler.DeletePost)
@@ -124,13 +141,17 @@ func main() {
 	fAuth.PUT("/:id/update", handler.UpdateFlicker)
 	fAuth.PUT("/:id/transfer", handler.TransferFlicker)
 
-	br := e.Group("/blog/reactions")
+	br := blog.Group("/reactions")
 	br.GET("/:id", handler.GetBlogReactionByID)
 
 	brAuth := br.Group("")
 	brAuth.Use(middleware.JWTWithConfig(jwtConfig))
 	brAuth.PUT("/:id/update", handler.UpdateBlogReaction)
 	brAuth.DELETE("/:id/delete", handler.DeleteBlogReaction)
+
+	/* TODO
+	1. Password Reset
+	*/
 
 	e.HTTPErrorHandler = func(err error, c echo.Context) {
 		code := http.StatusInternalServerError

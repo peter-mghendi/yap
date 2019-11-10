@@ -24,7 +24,7 @@ type Reaction struct {
 	Base
 	Type ReactionType `json:"type"`
 	User uuid.UUID    `gorm:"type:uuid" json:"user"`
-	Post uuid.UUID    `gorm:"type:uuid" json:"post"`
+	Item uuid.UUID    `gorm:"type:uuid" json:"item"`
 	Site string       `json:"site"`
 	Text string       `json:"text"`
 }

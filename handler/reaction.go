@@ -40,7 +40,7 @@ func GetBlogPostReactions(c echo.Context) error {
 	}
 
 	reactions = util.FilterR(reactions, func(r model.Reaction) bool {
-		return (r.Site == "blog") && (r.Post == post)
+		return (r.Site == "blog") && (r.Item == post)
 	})
 
 	resp.Status, resp.Message, resp.Reactions = true, http.StatusText(status), reactions
@@ -71,10 +71,17 @@ func GetUserBlogReactions(c echo.Context) error {
 	return c.JSON(status, resp)
 }
 
-// GetBlogReactionByID handles the "/blog/reactions/:id" route.
-func GetBlogReactionByID(c echo.Context) error {
+// GetBlogPostReactionByID handles the "/blog/reactions/:id" route.
+func GetBlogPostReactionByID(c echo.Context) error {
 	resp, status := ReactionResponse{}, 0
-	id := uuid.FromStringOrNil(c.Param("id"))
+	id := uuid.FromStringOrNil(c.Param("reaction"))
+	if uuid.Equal(id, uuid.Nil) {
+		status = http.StatusBadRequest
+		resp.Message = http.StatusText(status)
+		return c.JSON(status, resp)
+	}
+
+	post := uuid.FromStringOrNil(c.Param("id"))
 	if uuid.Equal(id, uuid.Nil) {
 		status = http.StatusBadRequest
 		resp.Message = http.StatusText(status)
@@ -83,16 +90,12 @@ func GetBlogReactionByID(c echo.Context) error {
 
 	reaction := model.Reaction{
 		Base: model.Base{ID: id},
+		Site: "blog",
+		Item: post,
 	}
 
 	status, err := reaction.Read()
 	if err != nil {
-		resp.Message = http.StatusText(status)
-		return c.JSON(status, resp)
-	}
-
-	if reaction.Site != "blog" {
-		status = http.StatusNotFound
 		resp.Message = http.StatusText(status)
 		return c.JSON(status, resp)
 	}
@@ -122,7 +125,7 @@ func CreateBlogReaction(c echo.Context) error {
 		return c.JSON(status, resp)
 	}
 
-	reaction.User, reaction.Post = claims.User, post
+	reaction.User, reaction.Item = claims.User, post
 	if status, err := reaction.Create(); err != nil {
 		resp.Message = http.StatusText(status)
 		return c.JSON(status, resp)
@@ -138,27 +141,28 @@ func UpdateBlogReaction(c echo.Context) error {
 	claims := userToken.Claims.(*JwtCustomClaims)
 
 	resp, status := ReactionResponse{}, 0
-	reaction, r := model.Reaction{}, model.Reaction{}
+	reaction, r := model.Reaction{Site: "blog"}, model.Reaction{}
 	if err := c.Bind(&r); err != nil {
 		status = http.StatusBadRequest
 		resp.Message = http.StatusText(status)
 		return c.JSON(status, resp)
 	}
 
-	reaction.ID = uuid.FromStringOrNil(c.Param("id"))
+	reaction.ID = uuid.FromStringOrNil(c.Param("reaction"))
 	if uuid.Equal(reaction.ID, uuid.Nil) {
 		status = http.StatusBadRequest
 		resp.Message = http.StatusText(status)
 		return c.JSON(status, resp)
 	}
 
-	if status, err := reaction.Read(); err != nil {
+	reaction.Item = uuid.FromStringOrNil(c.Param("id"))
+	if uuid.Equal(reaction.Item, uuid.Nil) {
+		status = http.StatusBadRequest
 		resp.Message = http.StatusText(status)
 		return c.JSON(status, resp)
 	}
 
-	if reaction.Site != "blog" {
-		status = http.StatusNotFound
+	if status, err := reaction.Read(); err != nil {
 		resp.Message = http.StatusText(status)
 		return c.JSON(status, resp)
 	}
@@ -184,20 +188,23 @@ func UpdateBlogReaction(c echo.Context) error {
 func DeleteBlogReaction(c echo.Context) error {
 	userToken := c.Get("user").(*jwt.Token)
 	claims := userToken.Claims.(*JwtCustomClaims)
-
-	resp, status := ReactionResponse{}, 0
-	reaction := model.Reaction{
-		Base: model.Base{ID: uuid.FromStringOrNil(c.Param("id"))},
-	}
-
-	status, err := reaction.Read()
-	if err != nil {
+	reaction, resp, status := model.Reaction{Site: "blog"}, ReactionResponse{}, 0
+	reaction.ID = uuid.FromStringOrNil(c.Param("reaction"))
+	if uuid.Equal(reaction.ID, uuid.Nil) {
+		status = http.StatusBadRequest
 		resp.Message = http.StatusText(status)
 		return c.JSON(status, resp)
 	}
 
-	if reaction.Site != "blog" {
-		status = http.StatusNotFound
+	reaction.Item = uuid.FromStringOrNil(c.Param("id"))
+	if uuid.Equal(reaction.Item, uuid.Nil) {
+		status = http.StatusBadRequest
+		resp.Message = http.StatusText(status)
+		return c.JSON(status, resp)
+	}
+
+	status, err := reaction.Read()
+	if err != nil {
 		resp.Message = http.StatusText(status)
 		return c.JSON(status, resp)
 	}

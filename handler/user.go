@@ -102,10 +102,10 @@ func UpdateUser(c echo.Context) error {
 }
 
 // AssignUser handles the "/users/:id/assign" route.
+// HACK Too many ifs
 func AssignUser(c echo.Context) error {
 	userToken := c.Get("user").(*jwt.Token)
 	claims := userToken.Claims.(*JwtCustomClaims)
-
 	resp, status := UserResponse{}, 0
 	user, u := model.User{}, model.User{}
 	if err := c.Bind(&u); err != nil {
@@ -149,7 +149,7 @@ func AssignUser(c echo.Context) error {
 
 		if count == 1 {
 			status = http.StatusNotModified
-			resp.Message = "Sole keeper"
+			resp.Message = "Sole keeper" // TODO More verbose
 			return c.JSON(status, resp)
 		}
 	}

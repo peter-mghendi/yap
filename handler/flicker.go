@@ -84,18 +84,13 @@ func GetPublicFlickerByID(c echo.Context) error {
 
 	flicker := &model.Flicker{
 		PostBase: model.PostBase{
-			Base: model.Base{ID: id},
+			Base:    model.Base{ID: id},
+			Release: true,
 		},
 	}
 
 	status, err := flicker.Read()
 	if err != nil {
-		resp.Message = http.StatusText(status)
-		return c.JSON(status, resp)
-	}
-
-	if !flicker.Release {
-		status = http.StatusNotFound
 		resp.Message = http.StatusText(status)
 		return c.JSON(status, resp)
 	}

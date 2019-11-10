@@ -84,18 +84,13 @@ func GetPublicGalleryByID(c echo.Context) error {
 
 	gallery := &model.Gallery{
 		PostBase: model.PostBase{
-			Base: model.Base{ID: id},
+			Base:    model.Base{ID: id},
+			Release: true,
 		},
 	}
 
 	status, err := gallery.Read()
 	if err != nil {
-		resp.Message = http.StatusText(status)
-		return c.JSON(status, resp)
-	}
-
-	if !gallery.Release {
-		status = http.StatusNotFound
 		resp.Message = http.StatusText(status)
 		return c.JSON(status, resp)
 	}

@@ -49,6 +49,10 @@ func init() {
 1. Forum
 2. Relational data
 3. User actions
+4. RSS Feeds
+5. All posts
+6. Search
+7. Password Reset
 */
 func main() {
 	jwtConfig := middleware.JWTConfig{
@@ -64,6 +68,7 @@ func main() {
 		AllowMethods: []string{echo.GET, echo.HEAD, echo.PUT, echo.PATCH, echo.POST, echo.DELETE},
 	}))
 
+	// PATH /users
 	u := e.Group("/users")
 	u.GET("", handler.GetUsers)
 	u.GET("/:id", handler.GetUserByID)
@@ -71,10 +76,11 @@ func main() {
 	u.POST("/auth", handler.AuthUser)
 	// u.GET("/:id/blog/posts", handler.GetUserBlogPosts) // TODO
 	u.GET("/:id/blog/reactions", handler.GetUserBlogReactions)
-	// u.GET("/:id/forum/reactions", handler.GetUserForumReactions) // TODO
 	// u.GET("/:id/forum/questions", handler.GetUserForumQuestions) // TODO
 	// u.GET("/:id/forum/responses", handler.GetUserForumResponses) // TODO
+	// u.GET("/:id/forum/reactions", handler.GetUserForumReactions) // TODO
 
+	// PATH /users/restriced
 	uAuth := u.Group("/restricted")
 	uAuth.Use(middleware.JWTWithConfig(jwtConfig))
 	uAuth.PUT("/me/update", handler.UpdateUser)
@@ -82,14 +88,10 @@ func main() {
 	uAuth.PUT("/:id/assign", handler.AssignUser)
 	uAuth.DELETE("/:id/delete", handler.DeleteUser)
 
-	/* TODO
-	1. RSS Feeds
-	2. All posts
-	3. Search
-	*/
+	// PATH /blog
 	blog := e.Group("/blog")
-	// blog.GET("/feed", handler.GetFeed) // TODO
 
+	// PATH /blog/posts
 	p := blog.Group("/posts")
 	pAuth := p.Group("/:id")
 	pAuth.Use(middleware.JWTWithConfig(jwtConfig))
@@ -97,14 +99,19 @@ func main() {
 	pAuth.PUT("/publish", handler.PublishPost)
 	pAuth.PUT("/retract", handler.RetractPost)
 
+	// PATH /blog/posts/:id/reactions
 	pr := p.Group("/:id/reactions")
-
 	pr.GET("", handler.GetBlogPostReactions)
+	pr.GET("/:reaction", handler.GetBlogPostReactionByID)
 
-	prAuth := pr.Group("/create")
+	// PATH /blog/posts/:id/reactions/restricted
+	prAuth := pr.Group("/restricted")
 	prAuth.Use(middleware.JWTWithConfig(jwtConfig))
-	prAuth.POST("", handler.CreateBlogReaction)
+	prAuth.POST("/create", handler.CreateBlogReaction)
+	prAuth.PUT("/:reaction/update", handler.UpdateBlogReaction)
+	prAuth.DELETE("/:reaction/delete", handler.DeleteBlogReaction)
 
+	// PATH /blog/posts/articles
 	a := p.Group("/articles")
 	a.GET("/public", handler.GetPublicArticles)
 	a.GET("/public/:id", handler.GetPublicArticleByID)
@@ -117,6 +124,7 @@ func main() {
 	aAuth.PUT("/:id/update", handler.UpdateArticle)
 	aAuth.PUT("/:id/transfer", handler.TransferArticle)
 
+	// PATH /blog/posts/galleries
 	g := p.Group("/galleries")
 	g.GET("/public", handler.GetPublicGalleries)
 	g.GET("/public/:id", handler.GetPublicGalleryByID)
@@ -129,6 +137,7 @@ func main() {
 	gAuth.PUT("/:id/update", handler.UpdateGallery)
 	gAuth.PUT("/:id/transfer", handler.TransferGallery)
 
+	// PATH /blog/posts/flickers
 	f := p.Group("/flickers")
 	f.GET("/public", handler.GetPublicFlickers)
 	f.GET("/public/:id", handler.GetPublicFlickerByID)
@@ -141,17 +150,31 @@ func main() {
 	fAuth.PUT("/:id/update", handler.UpdateFlicker)
 	fAuth.PUT("/:id/transfer", handler.TransferFlicker)
 
-	br := blog.Group("/reactions")
-	br.GET("/:id", handler.GetBlogReactionByID)
+	// PATH /forum // TODO Forum
+	// forum := e.Group("/forum")
 
-	brAuth := br.Group("")
-	brAuth.Use(middleware.JWTWithConfig(jwtConfig))
-	brAuth.PUT("/:id/update", handler.UpdateBlogReaction)
-	brAuth.DELETE("/:id/delete", handler.DeleteBlogReaction)
+	// PATH /forum/questions
+	// q := forum.Group("/questions")
+	// q.GET("", handler.GetQuestions)
+	// q.GET("/:id", handler.GetQuestionByID)
 
-	/* TODO
-	1. Password Reset
-	*/
+	// qAuth := q.Group("/restricted")
+	// qAuth.Use(middleware.JWTWithConfig(jwtConfig))
+	// qAuth.POST("/create", handler.CreateQuestion)
+	// qAuth.PUT("/:id/update", handler.UpdateQuestion)
+	// qAuth.DELETE("/:id/delete", handler.DeleteQuestion)
+
+	// PATH /forum/responses
+	// r := q.Group("/:id/responses")
+	// r.GET("", handler.GetQuestionResponses)
+	// r.GET(":id", handler.GetPostResponseByID)
+
+	// rAuth := r.Group("/restricted")
+	// rAuth.Use(middleware.JWTWithConfig(jwtConfig))
+	// rAuth.POST("/create", handler.CreateQuestionResponse)
+	// rAuth.PUT("/select", handler.SelectQuestionResponse)
+	// rAuth.PUT("/:id/update", handler.UpdateQuestionResponse)
+	// rAuth.DELETE("/:id/delete", handler.DeleteQuestionResponse)
 
 	e.HTTPErrorHandler = func(err error, c echo.Context) {
 		code := http.StatusInternalServerError

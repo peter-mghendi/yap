@@ -18,7 +18,7 @@ type Question struct {
 	Section string         `json:"section"`
 	Creator uuid.UUID      `json:"creator" gorm:"type:uuid"`
 	Summons int            `json:"summons"`
-	Answers pq.StringArray `json:"answers" gorm:"type:varchar(255)[]"`
+	Riposte uuid.UUID      `json:"riposte" gorm:"type:uuid"`
 }
 
 // Create makes a new question
@@ -59,7 +59,7 @@ func (q *Question) Update() (int, error) {
 		Content: q.Content,
 		Markers: q.Markers,
 		Section: q.Section,
-		Answers: q.Answers,
+		Riposte: q.Riposte,
 	}
 
 	err := db.DB.Model(q).Updates(question).Error

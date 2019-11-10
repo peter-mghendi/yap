@@ -84,18 +84,13 @@ func GetPublicArticleByID(c echo.Context) error {
 
 	article := &model.Article{
 		PostBase: model.PostBase{
-			Base: model.Base{ID: id},
+			Base:    model.Base{ID: id},
+			Release: true,
 		},
 	}
 
 	status, err := article.Read()
 	if err != nil {
-		resp.Message = http.StatusText(status)
-		return c.JSON(status, resp)
-	}
-
-	if !article.Release {
-		status = http.StatusNotFound
 		resp.Message = http.StatusText(status)
 		return c.JSON(status, resp)
 	}

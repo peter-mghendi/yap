@@ -15,7 +15,7 @@ var (
 )
 
 // InitRBAC initializes the Role-Based Access Control
-// HACK error handling
+// HACK Ignored error handling
 func InitRBAC() error {
 	var err error
 	rbac := gorbac.New()

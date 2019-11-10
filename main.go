@@ -47,12 +47,10 @@ func init() {
 
 /* TODO
 1. Forum
-2. Relational data
-3. User actions
-4. RSS Feeds
-5. All posts
-6. Search
-7. Password Reset
+2. Relational data (posts, reactions, questions, answers)
+3. User data (separately per post type)
+4. Search (separately per post type)
+5. Password Reset
 */
 func main() {
 	jwtConfig := middleware.JWTConfig{
@@ -150,7 +148,7 @@ func main() {
 	fAuth.PUT("/:id/update", handler.UpdateFlicker)
 	fAuth.PUT("/:id/transfer", handler.TransferFlicker)
 
-	// PATH /forum // TODO Forum
+	// PATH /forum
 	// forum := e.Group("/forum")
 
 	// PATH /forum/questions

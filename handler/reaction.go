@@ -32,15 +32,15 @@ func GetBlogPostReactions(c echo.Context) error {
 		return c.JSON(status, resp)
 	}
 
-	post := uuid.FromStringOrNil(c.Param("id"))
-	if uuid.Equal(uuid.Nil, post) {
+	postID := uuid.FromStringOrNil(c.Param("id"))
+	if uuid.Equal(postID, uuid.Nil) {
 		status = http.StatusBadRequest
 		resp.Message = http.StatusText(status)
 		return c.JSON(status, resp)
 	}
 
 	reactions = util.FilterR(reactions, func(r model.Reaction) bool {
-		return (r.Site == "blog") && (r.Item == post)
+		return (r.Site == "blog") && (r.Item == postID)
 	})
 
 	resp.Status, resp.Message, resp.Reactions = true, http.StatusText(status), reactions
@@ -56,15 +56,15 @@ func GetUserBlogReactions(c echo.Context) error {
 		return c.JSON(status, resp)
 	}
 
-	user := uuid.FromStringOrNil(c.Param("id"))
-	if uuid.Equal(uuid.Nil, user) {
+	userID := uuid.FromStringOrNil(c.Param("id"))
+	if uuid.Equal(userID, uuid.Nil) {
 		status = http.StatusBadRequest
 		resp.Message = http.StatusText(status)
 		return c.JSON(status, resp)
 	}
 
 	reactions = util.FilterR(reactions, func(r model.Reaction) bool {
-		return (r.Site == "blog") && (r.User == user)
+		return (r.Site == "blog") && (r.User == userID)
 	})
 
 	resp.Status, resp.Message, resp.Reactions = true, http.StatusText(status), reactions
@@ -74,24 +74,26 @@ func GetUserBlogReactions(c echo.Context) error {
 // GetBlogPostReactionByID handles the "/blog/reactions/:id" route.
 func GetBlogPostReactionByID(c echo.Context) error {
 	resp, status := ReactionResponse{}, 0
-	id := uuid.FromStringOrNil(c.Param("reaction"))
-	if uuid.Equal(id, uuid.Nil) {
+	reactionID := uuid.FromStringOrNil(c.Param("reaction"))
+	if uuid.Equal(reactionID, uuid.Nil) {
 		status = http.StatusBadRequest
 		resp.Message = http.StatusText(status)
 		return c.JSON(status, resp)
 	}
 
-	post := uuid.FromStringOrNil(c.Param("id"))
-	if uuid.Equal(id, uuid.Nil) {
+	postID := uuid.FromStringOrNil(c.Param("id"))
+	if uuid.Equal(postID, uuid.Nil) {
 		status = http.StatusBadRequest
 		resp.Message = http.StatusText(status)
 		return c.JSON(status, resp)
 	}
 
 	reaction := model.Reaction{
-		Base: model.Base{ID: id},
+		Base: model.Base{
+			ID: reactionID,
+		},
 		Site: "blog",
-		Item: post,
+		Item: postID,
 	}
 
 	status, err := reaction.Read()
@@ -118,14 +120,14 @@ func CreateBlogReaction(c echo.Context) error {
 	}
 
 	reaction.Site = "blog"
-	post := uuid.FromStringOrNil(c.Param("id"))
-	if uuid.Equal(uuid.Nil, post) {
+	reaction.Item = uuid.FromStringOrNil(c.Param("id"))
+	if uuid.Equal(reaction.Item, uuid.Nil) {
 		status = http.StatusBadRequest
 		resp.Message = http.StatusText(status)
 		return c.JSON(status, resp)
 	}
 
-	reaction.User, reaction.Item = claims.User, post
+	reaction.User = claims.User
 	if status, err := reaction.Create(); err != nil {
 		resp.Message = http.StatusText(status)
 		return c.JSON(status, resp)
@@ -141,13 +143,14 @@ func UpdateBlogReaction(c echo.Context) error {
 	claims := userToken.Claims.(*JwtCustomClaims)
 
 	resp, status := ReactionResponse{}, 0
-	reaction, r := model.Reaction{Site: "blog"}, model.Reaction{}
+	reaction, r := model.Reaction{}, model.Reaction{}
 	if err := c.Bind(&r); err != nil {
 		status = http.StatusBadRequest
 		resp.Message = http.StatusText(status)
 		return c.JSON(status, resp)
 	}
 
+	reaction.Site = "blog"
 	reaction.ID = uuid.FromStringOrNil(c.Param("reaction"))
 	if uuid.Equal(reaction.ID, uuid.Nil) {
 		status = http.StatusBadRequest

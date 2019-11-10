@@ -11,6 +11,7 @@ import (
 )
 
 // User is a registered user
+// TODO User status
 type User struct {
 	Base
 	Name      string     `json:"name"`

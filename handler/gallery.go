@@ -49,17 +49,12 @@ func GetPublicGalleries(c echo.Context) error {
 // GetGalleryByID handles the "/blog/posts/galleries/:id" route.
 func GetGalleryByID(c echo.Context) error {
 	resp, status := PostResponse{}, 0
-	id := uuid.FromStringOrNil(c.Param("id"))
-	if uuid.Equal(id, uuid.Nil) {
+	gallery := &model.Gallery{}
+	gallery.ID = uuid.FromStringOrNil(c.Param("id"))
+	if uuid.Equal(gallery.ID, uuid.Nil) {
 		status = http.StatusBadRequest
 		resp.Message = http.StatusText(status)
 		return c.JSON(status, resp)
-	}
-
-	gallery := &model.Gallery{
-		PostBase: model.PostBase{
-			Base: model.Base{ID: id},
-		},
 	}
 
 	status, err := gallery.Read()
@@ -75,18 +70,19 @@ func GetGalleryByID(c echo.Context) error {
 // GetPublicGalleryByID handles the "/blog/posts/galleries/public/:id" route.
 func GetPublicGalleryByID(c echo.Context) error {
 	resp, status := PostResponse{}, 0
-	id := uuid.FromStringOrNil(c.Param("id"))
-	if uuid.Equal(id, uuid.Nil) {
+	gallery := &model.Gallery{
+		PostBase: model.PostBase{
+			Base: model.Base{
+				ID: uuid.FromStringOrNil(c.Param("id")),
+			},
+			Release: true,
+		},
+	}
+
+	if uuid.Equal(gallery.ID, uuid.Nil) {
 		status = http.StatusBadRequest
 		resp.Message = http.StatusText(status)
 		return c.JSON(status, resp)
-	}
-
-	gallery := &model.Gallery{
-		PostBase: model.PostBase{
-			Base:    model.Base{ID: id},
-			Release: true,
-		},
 	}
 
 	status, err := gallery.Read()

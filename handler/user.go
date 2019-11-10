@@ -42,15 +42,12 @@ func GetUsers(c echo.Context) error {
 // GetUserByID handles the "/users/:id" route.
 func GetUserByID(c echo.Context) error {
 	resp, status := UserResponse{}, 0
-	id := uuid.FromStringOrNil(c.Param("id"))
-	if uuid.Equal(id, uuid.Nil) {
+	user := model.User{}
+	user.ID = uuid.FromStringOrNil(c.Param("id"))
+	if uuid.Equal(user.ID, uuid.Nil) {
 		status = http.StatusBadRequest
 		resp.Message = http.StatusText(status)
 		return c.JSON(status, resp)
-	}
-
-	user := model.User{
-		Base: model.Base{ID: id},
 	}
 
 	status, err := user.Read()
@@ -102,7 +99,6 @@ func UpdateUser(c echo.Context) error {
 }
 
 // AssignUser handles the "/users/:id/assign" route.
-// HACK Too many ifs
 func AssignUser(c echo.Context) error {
 	userToken := c.Get("user").(*jwt.Token)
 	claims := userToken.Claims.(*JwtCustomClaims)
@@ -149,7 +145,7 @@ func AssignUser(c echo.Context) error {
 
 		if count == 1 {
 			status = http.StatusNotModified
-			resp.Message = "Sole keeper" // TODO More verbose
+			resp.Message = "Only this keeper exists"
 			return c.JSON(status, resp)
 		}
 	}

@@ -49,17 +49,12 @@ func GetPublicArticles(c echo.Context) error {
 // GetArticleByID handles the "/blog/posts/articles/:id" route.
 func GetArticleByID(c echo.Context) error {
 	resp, status := PostResponse{}, 0
-	id := uuid.FromStringOrNil(c.Param("id"))
-	if uuid.Equal(id, uuid.Nil) {
+	article := &model.Article{}
+	article.ID = uuid.FromStringOrNil(c.Param("id"))
+	if uuid.Equal(article.ID, uuid.Nil) {
 		status = http.StatusBadRequest
 		resp.Message = http.StatusText(status)
 		return c.JSON(status, resp)
-	}
-
-	article := &model.Article{
-		PostBase: model.PostBase{
-			Base: model.Base{ID: id},
-		},
 	}
 
 	status, err := article.Read()
@@ -75,18 +70,19 @@ func GetArticleByID(c echo.Context) error {
 // GetPublicArticleByID handles the "/blog/posts/articles/public/:id" route.
 func GetPublicArticleByID(c echo.Context) error {
 	resp, status := PostResponse{}, 0
-	id := uuid.FromStringOrNil(c.Param("id"))
-	if uuid.Equal(id, uuid.Nil) {
+	article := &model.Article{
+		PostBase: model.PostBase{
+			Base: model.Base{
+				ID: uuid.FromStringOrNil(c.Param("id")),
+			},
+			Release: true,
+		},
+	}
+
+	if uuid.Equal(article.ID, uuid.Nil) {
 		status = http.StatusBadRequest
 		resp.Message = http.StatusText(status)
 		return c.JSON(status, resp)
-	}
-
-	article := &model.Article{
-		PostBase: model.PostBase{
-			Base:    model.Base{ID: id},
-			Release: true,
-		},
 	}
 
 	status, err := article.Read()
@@ -132,7 +128,6 @@ func CreateArticle(c echo.Context) error {
 func UpdateArticle(c echo.Context) error {
 	userToken := c.Get("user").(*jwt.Token)
 	claims := userToken.Claims.(*JwtCustomClaims)
-
 	resp, status := PostResponse{}, 0
 	article, a := &model.Article{}, &model.Article{}
 	if err := c.Bind(a); err != nil {

@@ -49,17 +49,12 @@ func GetPublicFlickers(c echo.Context) error {
 // GetFlickerByID handles the "/blog/posts/flickers/:id" route.
 func GetFlickerByID(c echo.Context) error {
 	resp, status := PostResponse{}, 0
-	id := uuid.FromStringOrNil(c.Param("id"))
-	if uuid.Equal(id, uuid.Nil) {
+	flicker := &model.Flicker{}
+	flicker.ID = uuid.FromStringOrNil(c.Param("id"))
+	if uuid.Equal(flicker.ID, uuid.Nil) {
 		status = http.StatusBadRequest
 		resp.Message = http.StatusText(status)
 		return c.JSON(status, resp)
-	}
-
-	flicker := &model.Flicker{
-		PostBase: model.PostBase{
-			Base: model.Base{ID: id},
-		},
 	}
 
 	status, err := flicker.Read()
@@ -75,18 +70,19 @@ func GetFlickerByID(c echo.Context) error {
 // GetPublicFlickerByID handles the "/blog/posts/flickers/public/:id" route.
 func GetPublicFlickerByID(c echo.Context) error {
 	resp, status := PostResponse{}, 0
-	id := uuid.FromStringOrNil(c.Param("id"))
-	if uuid.Equal(id, uuid.Nil) {
+	flicker := &model.Flicker{
+		PostBase: model.PostBase{
+			Base: model.Base{
+				ID: uuid.FromStringOrNil(c.Param("id")),
+			},
+			Release: true,
+		},
+	}
+
+	if uuid.Equal(flicker.ID, uuid.Nil) {
 		status = http.StatusBadRequest
 		resp.Message = http.StatusText(status)
 		return c.JSON(status, resp)
-	}
-
-	flicker := &model.Flicker{
-		PostBase: model.PostBase{
-			Base:    model.Base{ID: id},
-			Release: true,
-		},
 	}
 
 	status, err := flicker.Read()

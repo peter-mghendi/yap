@@ -72,7 +72,9 @@ func main() {
 	u.GET("/:id", handler.GetUserByID)
 	u.POST("/join", handler.JoinUser)
 	u.POST("/auth", handler.AuthUser)
-	// u.GET("/:id/blog/posts", handler.GetUserBlogPosts) // TODO
+	u.GET("/:id/blog/posts/articles", handler.GetUserPublicBlogArticles)
+	u.GET("/:id/blog/posts/galleries", handler.GetUserPublicBlogGalleries)
+	u.GET("/:id/blog/posts/flickers", handler.GetUserPublicBlogFlickers)
 	u.GET("/:id/blog/reactions", handler.GetUserBlogReactions)
 	// u.GET("/:id/forum/questions", handler.GetUserForumQuestions) // TODO
 	// u.GET("/:id/forum/responses", handler.GetUserForumResponses) // TODO
@@ -81,6 +83,9 @@ func main() {
 	// PATH /users/restriced
 	uAuth := u.Group("/restricted")
 	uAuth.Use(middleware.JWTWithConfig(jwtConfig))
+	// uAuth.GET("/:id/blog/posts/articles", handler.GetUserBlogArticles) // TODO
+	// uAuth.GET("/:id/blog/posts/galleries", handler.GetUserBlogGalleries) // TODO
+	// uAuth.GET("/:id/blog/posts/flickers", handler.GetUserBlogFlickers) // TODO
 	uAuth.PUT("/me/update", handler.UpdateUser)
 	uAuth.PUT("/me/change", handler.UpdatePass)
 	uAuth.PUT("/:id/assign", handler.AssignUser)

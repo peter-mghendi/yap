@@ -23,6 +23,7 @@ func (f *Flicker) Create() (int, error) {
 			Overlay: f.Overlay,
 			Section: f.Section,
 			Creator: f.Creator,
+			Pattern: flickerPost,
 			Markers: f.Markers,
 		},
 		Content: f.Content,
@@ -107,7 +108,7 @@ func (f *Flicker) Publish() (int, error) {
 	return http.StatusAccepted, nil
 }
 
-// Retract makes makes a Flicker private
+// Retract makes a Flicker private
 func (f *Flicker) Retract() (int, error) {
 	if !f.Release {
 		return http.StatusNotModified, nil

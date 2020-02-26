@@ -5,7 +5,7 @@ import (
 	"github.com/mikespook/gorbac"
 )
 
-// RBAC is an instance of the Role-Based Access Control
+// RBAC is a Role-Based Access Control instance
 var (
 	RBAC                  *gorbac.RBAC
 	permissionPostOps     gorbac.Permission
@@ -15,7 +15,6 @@ var (
 )
 
 // InitRBAC initializes the Role-Based Access Control
-// HACK Ignored error handling
 func InitRBAC() error {
 	var err error
 	rbac := gorbac.New()
@@ -26,8 +25,8 @@ func InitRBAC() error {
 
 	permissionPostOps = gorbac.NewStdPermission("postOps")         // Publish, Retract, Delete, Edit released posts | Delete reactions
 	permissionUserOps = gorbac.NewStdPermission("userOps")         // Delete, Assign user
-	permissionDraftOps = gorbac.NewStdPermission("draftOps")       // Create, Delete draft, Edit draft
-	permissionReactionOps = gorbac.NewStdPermission("reactionOps") // Create, Delete reaction
+	permissionDraftOps = gorbac.NewStdPermission("draftOps")       // Create, Delete, Edit draft
+	permissionReactionOps = gorbac.NewStdPermission("reactionOps") // Delete reaction
 
 	_ = roleKeeper.Assign(permissionPostOps)
 	_ = roleKeeper.Assign(permissionUserOps)

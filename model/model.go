@@ -9,7 +9,7 @@ func InitDB(url string) error {
 	if err := db.Init(url); err != nil {
 		return err
 	}
-	if err := db.DB.Debug().AutoMigrate(&User{}, &Article{}, &Gallery{}, &Flicker{}, &Question{}, &Response{}, &Reaction{}).Error; err != nil {
+	if err := db.DB.Debug().AutoMigrate(&User{}, &Article{}, &Gallery{}, &Flicker{}, &Reaction{}).Error; err != nil {
 		return err
 	}
 

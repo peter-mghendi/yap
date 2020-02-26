@@ -35,7 +35,7 @@ const (
 )
 
 // Create makes a User
-// First user is automatically promoted to "UserKeeper" role
+// First user is being automatically promoted to the "UserKeeper" role
 func (u *User) Create() (int, error) {
 	if num, status, err := CountUsers(&User{Mail: u.Mail}); num > 0 {
 		status := http.StatusBadRequest
@@ -130,8 +130,8 @@ func (u *User) Delete() (int, error) {
 		return http.StatusInternalServerError, err
 	}
 
-	db := db.DB.Delete(u)
-	if num, err := db.RowsAffected, db.Error; num == 0 {
+	res := db.DB.Delete(u)
+	if num, err := res.RowsAffected, res.Error; num == 0 {
 		return http.StatusNotFound, gorm.ErrRecordNotFound
 	} else if err != nil {
 		return http.StatusInternalServerError, err

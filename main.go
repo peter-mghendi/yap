@@ -25,7 +25,7 @@ var (
 
 func cleanup() {
 	log.Println("Shutting down server.")
-	db.DB.Close()
+	_ = db.DB.Close()
 }
 
 func init() {
@@ -46,10 +46,11 @@ func init() {
 }
 
 /* TODO
-2. Relational data (posts, reactions)
-3. User data (separately per post type)
-4. Search (separately per post type)
-5. Password Reset
+1. Podcasts.
+2. Relational data (posts, reactions).
+3. User data (separately per post type).
+4. Search (separately per post type).
+5. Password Reset.
 */
 func main() {
 	jwtConfig := middleware.JWTConfig{
@@ -71,17 +72,17 @@ func main() {
 	u.GET("/:id", handler.GetUserByID)
 	u.POST("/join", handler.JoinUser)
 	u.POST("/auth", handler.AuthUser)
-	u.GET("/:id/posts/articles", handler.GetUserPublicArticles)
-	u.GET("/:id/posts/galleries", handler.GetUserPublicGalleries)
-	u.GET("/:id/posts/flickers", handler.GetUserPublicFlickers)
-	u.GET("/:id/reactions", handler.GetUserReactions)
+	u.GET("/:id/posts/articles", handler.GetUserPublicArticles) // TODO Relations
+	u.GET("/:id/posts/galleries", handler.GetUserPublicGalleries) // TODO Relations
+	u.GET("/:id/posts/flickers", handler.GetUserPublicFlickers) // TODO Relations
+	u.GET("/:id/reactions", handler.GetUserReactions) // TODO Relations
 
 	// PATH /users/restricted
 	uAuth := u.Group("/restricted")
 	uAuth.Use(middleware.JWTWithConfig(jwtConfig))
-	// uAuth.GET("/:id/posts/articles", handler.GetUserArticles) // TODO
-	// uAuth.GET("/:id/posts/galleries", handler.GetUserGalleries) // TODO
-	// uAuth.GET("/:id/posts/flickers", handler.GetUserFlickers) // TODO
+	// uAuth.GET("/:id/posts/articles", handler.GetUserArticles) // TODO Relations
+	// uAuth.GET("/:id/posts/galleries", handler.GetUserGalleries) // TODO Relations
+	// uAuth.GET("/:id/posts/flickers", handler.GetUserFlickers) // TODO Relations
 	uAuth.PUT("/me/update", handler.UpdateUser)
 	uAuth.PUT("/me/change", handler.UpdatePass)
 	uAuth.PUT("/:id/assign", handler.AssignUser)
@@ -96,9 +97,9 @@ func main() {
 	pAuth.PUT("/retract", handler.RetractPost)
 
 	// PATH /posts/:id/reactions
-	pr := p.Group("/:id/reactions")
-	pr.GET("", handler.GetPostReactions)
-	pr.GET("/:reaction", handler.GetPostReactionByID)
+	pr := p.Group("/:id/reactions") // TODO Relations
+	pr.GET("", handler.GetPostReactions) // TODO Relations
+	pr.GET("/:reaction", handler.GetPostReactionByID) // TODO Relations
 
 	// PATH /posts/:id/reactions/restricted
 	prAuth := pr.Group("/restricted")
@@ -156,7 +157,7 @@ func main() {
 			Message: http.StatusText(code),
 		}
 
-		c.JSON(code, resp)
+		_ = c.JSON(code, resp)
 		c.Logger().Error(err)
 	}
 

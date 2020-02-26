@@ -12,6 +12,7 @@ type Response struct {
 	Message string `json:"message"`
 }
 
+// TODO API Information here
 // AppController handles the "/" route.
 func AppController(c echo.Context) error {
 	return c.String(http.StatusOK, "Welcome to the Yap API!!\n")

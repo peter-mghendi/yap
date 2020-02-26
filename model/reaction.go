@@ -69,8 +69,8 @@ func (r *Reaction) Update() (int, error) {
 
 // Delete removes existing reactions
 func (r *Reaction) Delete() (int, error) {
-	db := db.DB.Delete(r)
-	if num, err := db.RowsAffected, db.Error; num == 0 {
+	res := db.DB.Delete(r)
+	if num, err := res.RowsAffected, res.Error; num == 0 {
 		return http.StatusNotFound, gorm.ErrRecordNotFound
 	} else if err != nil {
 		return http.StatusInternalServerError, nil

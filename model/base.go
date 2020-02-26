@@ -15,8 +15,8 @@ type Base struct {
 	DeletedAt *time.Time `sql:"index" json:"deleted_at"`
 }
 
-// BeforeCreate will set a UUID rather than numeric ID.
+// BeforeCreate will set a V4 UUID rather than numeric ID.
 func (base *Base) BeforeCreate(scope *gorm.Scope) error {
-	uuid := uuid.NewV4()
-	return scope.SetColumn("ID", uuid)
+	v4 := uuid.NewV4()
+	return scope.SetColumn("ID", v4)
 }

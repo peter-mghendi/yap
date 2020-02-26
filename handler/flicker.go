@@ -16,7 +16,7 @@ type FlickersResponse struct {
 	Flickers []model.Flicker `json:"data"`
 }
 
-// GetFlickers handles the "/blog/posts/flickers" route.
+// GetFlickers handles the "/posts/flickers" route.
 func GetFlickers(c echo.Context) error {
 	resp, status := FlickersResponse{}, 0
 	flickers, status, err := model.ReadAllFlickers()
@@ -29,7 +29,7 @@ func GetFlickers(c echo.Context) error {
 	return c.JSON(status, resp)
 }
 
-// GetPublicFlickers handles the "/blog/posts/flickers/public" route.
+// GetPublicFlickers handles the "/posts/flickers/public" route.
 func GetPublicFlickers(c echo.Context) error {
 	resp, status := FlickersResponse{}, 0
 	flickers, status, err := model.ReadAllFlickers()
@@ -46,7 +46,7 @@ func GetPublicFlickers(c echo.Context) error {
 	return c.JSON(status, resp)
 }
 
-// GetFlickerByID handles the "/blog/posts/flickers/:id" route.
+// GetFlickerByID handles the "/posts/flickers/:id" route.
 func GetFlickerByID(c echo.Context) error {
 	resp, status := PostResponse{}, 0
 	flicker := &model.Flicker{}
@@ -67,7 +67,7 @@ func GetFlickerByID(c echo.Context) error {
 	return c.JSON(status, resp)
 }
 
-// GetPublicFlickerByID handles the "/blog/posts/flickers/public/:id" route.
+// GetPublicFlickerByID handles the "/posts/flickers/public/:id" route.
 func GetPublicFlickerByID(c echo.Context) error {
 	resp, status := PostResponse{}, 0
 	flicker := &model.Flicker{
@@ -95,7 +95,7 @@ func GetPublicFlickerByID(c echo.Context) error {
 	return c.JSON(status, resp)
 }
 
-// CreateFlicker handles the "/blog/posts/flickers/create" route.
+// CreateFlicker handles the "/posts/flickers/create" route.
 func CreateFlicker(c echo.Context) error {
 	userToken := c.Get("user").(*jwt.Token)
 	claims := userToken.Claims.(*JwtCustomClaims)
@@ -124,7 +124,7 @@ func CreateFlicker(c echo.Context) error {
 	return c.JSON(status, resp)
 }
 
-// UpdateFlicker handles the "/blog/posts/flickers/:id/update" route.
+// UpdateFlicker handles the "/posts/flickers/:id/update" route.
 func UpdateFlicker(c echo.Context) error {
 	userToken := c.Get("user").(*jwt.Token)
 	claims := userToken.Claims.(*JwtCustomClaims)
@@ -169,7 +169,7 @@ func UpdateFlicker(c echo.Context) error {
 	return c.JSON(status, resp)
 }
 
-// TransferFlicker handles the "/blog/posts/flickers/:id/transfer" route.
+// TransferFlicker handles the "/posts/flickers/:id/transfer" route.
 func TransferFlicker(c echo.Context) error {
 	userToken := c.Get("user").(*jwt.Token)
 	claims := userToken.Claims.(*JwtCustomClaims)

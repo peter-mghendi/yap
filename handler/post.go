@@ -16,7 +16,7 @@ type PostResponse struct {
 	model.Post `json:"data"`
 }
 
-// PublishPost handles the "/blog/posts/:id/publish" route.
+// PublishPost handles the "/posts/:id/publish" route.
 func PublishPost(c echo.Context) error {
 	userToken := c.Get("user").(*jwt.Token)
 	claims := userToken.Claims.(*JwtCustomClaims)
@@ -51,7 +51,7 @@ func PublishPost(c echo.Context) error {
 	return c.JSON(status, resp)
 }
 
-// RetractPost handles the "/blog/posts/:id/retract" route.
+// RetractPost handles the "/posts/:id/retract" route.
 func RetractPost(c echo.Context) error {
 	userToken := c.Get("user").(*jwt.Token)
 	claims := userToken.Claims.(*JwtCustomClaims)
@@ -86,7 +86,7 @@ func RetractPost(c echo.Context) error {
 	return c.JSON(status, resp)
 }
 
-// DeletePost handles the "/blog/posts/:id/delete" route.
+// DeletePost handles the "/posts/:id/delete" route.
 func DeletePost(c echo.Context) error {
 	userToken := c.Get("user").(*jwt.Token)
 	claims := userToken.Claims.(*JwtCustomClaims)

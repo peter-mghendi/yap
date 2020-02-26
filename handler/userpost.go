@@ -9,8 +9,8 @@ import (
 	uuid "github.com/satori/go.uuid"
 )
 
-// GetUserPublicBlogArticles handles the "/users/:id/blog/posts/articles" route.
-func GetUserPublicBlogArticles(c echo.Context) error {
+// GetUserPublicArticles handles the "/users/:id/posts/articles" route.
+func GetUserPublicArticles(c echo.Context) error {
 	resp, status := ArticlesResponse{}, 0
 	articles, status, err := model.ReadAllArticles()
 	if err != nil {
@@ -33,8 +33,8 @@ func GetUserPublicBlogArticles(c echo.Context) error {
 	return c.JSON(status, resp)
 }
 
-// GetUserPublicBlogGalleries handles the "/users/:id/blog/posts/galleries" route.
-func GetUserPublicBlogGalleries(c echo.Context) error {
+// GetUserPublicGalleries handles the "/users/:id/posts/galleries" route.
+func GetUserPublicGalleries(c echo.Context) error {
 	resp, status := GalleriesResponse{}, 0
 	galleries, status, err := model.ReadAllGalleries()
 	if err != nil {
@@ -57,8 +57,8 @@ func GetUserPublicBlogGalleries(c echo.Context) error {
 	return c.JSON(status, resp)
 }
 
-// GetUserPublicBlogFlickers handles the "/users/:id/blog/posts/flickers" route.
-func GetUserPublicBlogFlickers(c echo.Context) error {
+// GetUserPublicFlickers handles the "/users/:id/posts/flickers" route.
+func GetUserPublicFlickers(c echo.Context) error {
 	resp, status := FlickersResponse{}, 0
 	flickers, status, err := model.ReadAllFlickers()
 	if err != nil {

@@ -23,8 +23,8 @@ type ReactionsResponse struct {
 	Reactions []model.Reaction `json:"data"`
 }
 
-// GetBlogPostReactions handles the "/blog/posts/:id/reactions" route.
-func GetBlogPostReactions(c echo.Context) error {
+// GetPostReactions handles the "/posts/:id/reactions" route.
+func GetPostReactions(c echo.Context) error {
 	resp, status := ReactionsResponse{}, 0
 	reactions, status, err := model.ReadAllReactions()
 	if err != nil {
@@ -47,8 +47,8 @@ func GetBlogPostReactions(c echo.Context) error {
 	return c.JSON(status, resp)
 }
 
-// GetUserBlogReactions handles the "/users/:id/blog/reactions" route.
-func GetUserBlogReactions(c echo.Context) error {
+// GetUserReactions handles the "/users/:id/reactions" route.
+func GetUserReactions(c echo.Context) error {
 	resp, status := ReactionsResponse{}, 0
 	reactions, status, err := model.ReadAllReactions()
 	if err != nil {
@@ -71,8 +71,8 @@ func GetUserBlogReactions(c echo.Context) error {
 	return c.JSON(status, resp)
 }
 
-// GetBlogPostReactionByID handles the "/blog/reactions/:id" route.
-func GetBlogPostReactionByID(c echo.Context) error {
+// GetPostReactionByID handles the "/reactions/:id" route.
+func GetPostReactionByID(c echo.Context) error {
 	resp, status := ReactionResponse{}, 0
 	reactionID := uuid.FromStringOrNil(c.Param("reaction"))
 	if uuid.Equal(reactionID, uuid.Nil) {
@@ -106,8 +106,8 @@ func GetBlogPostReactionByID(c echo.Context) error {
 	return c.JSON(status, resp)
 }
 
-// CreateBlogReaction handles the "/blog/reactions/create" route.
-func CreateBlogReaction(c echo.Context) error {
+// CreateReaction handles the "/reactions/create" route.
+func CreateReaction(c echo.Context) error {
 	userToken := c.Get("user").(*jwt.Token)
 	claims := userToken.Claims.(*JwtCustomClaims)
 
@@ -137,8 +137,8 @@ func CreateBlogReaction(c echo.Context) error {
 	return c.JSON(status, resp)
 }
 
-// UpdateBlogReaction handles the "/blog/reactions/:id/update" route.
-func UpdateBlogReaction(c echo.Context) error {
+// UpdateReaction handles the "/reactions/:id/update" route.
+func UpdateReaction(c echo.Context) error {
 	userToken := c.Get("user").(*jwt.Token)
 	claims := userToken.Claims.(*JwtCustomClaims)
 
@@ -187,8 +187,8 @@ func UpdateBlogReaction(c echo.Context) error {
 	return c.JSON(status, resp)
 }
 
-// DeleteBlogReaction handles the "/blog/reactions/:id/delete" route.
-func DeleteBlogReaction(c echo.Context) error {
+// DeleteReaction handles the "/reactions/:id/delete" route.
+func DeleteReaction(c echo.Context) error {
 	userToken := c.Get("user").(*jwt.Token)
 	claims := userToken.Claims.(*JwtCustomClaims)
 	reaction, resp, status := model.Reaction{Site: "blog"}, ReactionResponse{}, 0

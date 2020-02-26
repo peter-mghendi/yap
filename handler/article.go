@@ -16,7 +16,7 @@ type ArticlesResponse struct {
 	Articles []model.Article `json:"data"`
 }
 
-// GetArticles handles the "/blog/posts/articles" route.
+// GetArticles handles the "/posts/articles" route.
 func GetArticles(c echo.Context) error {
 	resp, status := ArticlesResponse{}, 0
 	articles, status, err := model.ReadAllArticles()
@@ -29,7 +29,7 @@ func GetArticles(c echo.Context) error {
 	return c.JSON(status, resp)
 }
 
-// GetPublicArticles handles the "/blog/posts/articles/public" route.
+// GetPublicArticles handles the "/posts/articles/public" route.
 func GetPublicArticles(c echo.Context) error {
 	resp, status := ArticlesResponse{}, 0
 	articles, status, err := model.ReadAllArticles()
@@ -46,7 +46,7 @@ func GetPublicArticles(c echo.Context) error {
 	return c.JSON(status, resp)
 }
 
-// GetArticleByID handles the "/blog/posts/articles/:id" route.
+// GetArticleByID handles the "/posts/articles/:id" route.
 func GetArticleByID(c echo.Context) error {
 	resp, status := PostResponse{}, 0
 	article := &model.Article{}
@@ -67,7 +67,7 @@ func GetArticleByID(c echo.Context) error {
 	return c.JSON(status, resp)
 }
 
-// GetPublicArticleByID handles the "/blog/posts/articles/public/:id" route.
+// GetPublicArticleByID handles the "/posts/articles/public/:id" route.
 func GetPublicArticleByID(c echo.Context) error {
 	resp, status := PostResponse{}, 0
 	article := &model.Article{
@@ -95,7 +95,7 @@ func GetPublicArticleByID(c echo.Context) error {
 	return c.JSON(status, resp)
 }
 
-// CreateArticle handles the "/blog/posts/articles/create" route.
+// CreateArticle handles the "/posts/articles/create" route.
 func CreateArticle(c echo.Context) error {
 	userToken := c.Get("user").(*jwt.Token)
 	claims := userToken.Claims.(*JwtCustomClaims)
@@ -124,7 +124,7 @@ func CreateArticle(c echo.Context) error {
 	return c.JSON(status, resp)
 }
 
-// UpdateArticle handles the "/blog/posts/articles/:id/update" route.
+// UpdateArticle handles the "/posts/articles/:id/update" route.
 func UpdateArticle(c echo.Context) error {
 	userToken := c.Get("user").(*jwt.Token)
 	claims := userToken.Claims.(*JwtCustomClaims)
@@ -168,7 +168,7 @@ func UpdateArticle(c echo.Context) error {
 	return c.JSON(status, resp)
 }
 
-// TransferArticle handles the "/blog/posts/articles/:id/transfer" route.
+// TransferArticle handles the "/posts/articles/:id/transfer" route.
 func TransferArticle(c echo.Context) error {
 	userToken := c.Get("user").(*jwt.Token)
 	claims := userToken.Claims.(*JwtCustomClaims)

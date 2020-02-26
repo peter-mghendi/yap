@@ -16,7 +16,7 @@ type GalleriesResponse struct {
 	Galleries []model.Gallery `json:"data"`
 }
 
-// GetGalleries handles the "/blog/posts/galleries" route.
+// GetGalleries handles the "/posts/galleries" route.
 func GetGalleries(c echo.Context) error {
 	resp, status := GalleriesResponse{}, 0
 	galleries, status, err := model.ReadAllGalleries()
@@ -29,7 +29,7 @@ func GetGalleries(c echo.Context) error {
 	return c.JSON(status, resp)
 }
 
-// GetPublicGalleries handles the "/blog/posts/galleries/public" route.
+// GetPublicGalleries handles the "/posts/galleries/public" route.
 func GetPublicGalleries(c echo.Context) error {
 	resp, status := GalleriesResponse{}, 0
 	galleries, status, err := model.ReadAllGalleries()
@@ -46,7 +46,7 @@ func GetPublicGalleries(c echo.Context) error {
 	return c.JSON(status, resp)
 }
 
-// GetGalleryByID handles the "/blog/posts/galleries/:id" route.
+// GetGalleryByID handles the "/posts/galleries/:id" route.
 func GetGalleryByID(c echo.Context) error {
 	resp, status := PostResponse{}, 0
 	gallery := &model.Gallery{}
@@ -67,7 +67,7 @@ func GetGalleryByID(c echo.Context) error {
 	return c.JSON(status, resp)
 }
 
-// GetPublicGalleryByID handles the "/blog/posts/galleries/public/:id" route.
+// GetPublicGalleryByID handles the "/posts/galleries/public/:id" route.
 func GetPublicGalleryByID(c echo.Context) error {
 	resp, status := PostResponse{}, 0
 	gallery := &model.Gallery{
@@ -95,7 +95,7 @@ func GetPublicGalleryByID(c echo.Context) error {
 	return c.JSON(status, resp)
 }
 
-// CreateGallery handles the "/blog/posts/galleries/create" route.
+// CreateGallery handles the "/posts/galleries/create" route.
 func CreateGallery(c echo.Context) error {
 	userToken := c.Get("user").(*jwt.Token)
 	claims := userToken.Claims.(*JwtCustomClaims)
@@ -124,7 +124,7 @@ func CreateGallery(c echo.Context) error {
 	return c.JSON(status, resp)
 }
 
-// UpdateGallery handles the "/blog/posts/galleries/:id/update" route.
+// UpdateGallery handles the "/posts/galleries/:id/update" route.
 func UpdateGallery(c echo.Context) error {
 	userToken := c.Get("user").(*jwt.Token)
 	claims := userToken.Claims.(*JwtCustomClaims)
@@ -169,7 +169,7 @@ func UpdateGallery(c echo.Context) error {
 	return c.JSON(status, resp)
 }
 
-// TransferGallery handles the "/blog/posts/galleries/:id/transfer" route.
+// TransferGallery handles the "/posts/galleries/:id/transfer" route.
 func TransferGallery(c echo.Context) error {
 	userToken := c.Get("user").(*jwt.Token)
 	claims := userToken.Claims.(*JwtCustomClaims)

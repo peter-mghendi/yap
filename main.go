@@ -46,8 +46,7 @@ func init() {
 }
 
 /* TODO
-1. Forum
-2. Relational data (posts, reactions, questions, answers)
+2. Relational data (posts, reactions)
 3. User data (separately per post type)
 4. Search (separately per post type)
 5. Password Reset
@@ -72,49 +71,43 @@ func main() {
 	u.GET("/:id", handler.GetUserByID)
 	u.POST("/join", handler.JoinUser)
 	u.POST("/auth", handler.AuthUser)
-	u.GET("/:id/blog/posts/articles", handler.GetUserPublicBlogArticles)
-	u.GET("/:id/blog/posts/galleries", handler.GetUserPublicBlogGalleries)
-	u.GET("/:id/blog/posts/flickers", handler.GetUserPublicBlogFlickers)
-	u.GET("/:id/blog/reactions", handler.GetUserBlogReactions)
-	// u.GET("/:id/forum/questions", handler.GetUserForumQuestions) // TODO
-	// u.GET("/:id/forum/responses", handler.GetUserForumResponses) // TODO
-	// u.GET("/:id/forum/reactions", handler.GetUserForumReactions) // TODO
+	u.GET("/:id/posts/articles", handler.GetUserPublicArticles)
+	u.GET("/:id/posts/galleries", handler.GetUserPublicGalleries)
+	u.GET("/:id/posts/flickers", handler.GetUserPublicFlickers)
+	u.GET("/:id/reactions", handler.GetUserReactions)
 
-	// PATH /users/restriced
+	// PATH /users/restricted
 	uAuth := u.Group("/restricted")
 	uAuth.Use(middleware.JWTWithConfig(jwtConfig))
-	// uAuth.GET("/:id/blog/posts/articles", handler.GetUserBlogArticles) // TODO
-	// uAuth.GET("/:id/blog/posts/galleries", handler.GetUserBlogGalleries) // TODO
-	// uAuth.GET("/:id/blog/posts/flickers", handler.GetUserBlogFlickers) // TODO
+	// uAuth.GET("/:id/posts/articles", handler.GetUserArticles) // TODO
+	// uAuth.GET("/:id/posts/galleries", handler.GetUserGalleries) // TODO
+	// uAuth.GET("/:id/posts/flickers", handler.GetUserFlickers) // TODO
 	uAuth.PUT("/me/update", handler.UpdateUser)
 	uAuth.PUT("/me/change", handler.UpdatePass)
 	uAuth.PUT("/:id/assign", handler.AssignUser)
 	uAuth.DELETE("/:id/delete", handler.DeleteUser)
 
-	// PATH /blog
-	blog := e.Group("/blog")
-
-	// PATH /blog/posts
-	p := blog.Group("/posts")
+	// PATH /posts
+	p := e.Group("/posts")
 	pAuth := p.Group("/:id")
 	pAuth.Use(middleware.JWTWithConfig(jwtConfig))
 	pAuth.DELETE("/delete", handler.DeletePost)
 	pAuth.PUT("/publish", handler.PublishPost)
 	pAuth.PUT("/retract", handler.RetractPost)
 
-	// PATH /blog/posts/:id/reactions
+	// PATH /posts/:id/reactions
 	pr := p.Group("/:id/reactions")
-	pr.GET("", handler.GetBlogPostReactions)
-	pr.GET("/:reaction", handler.GetBlogPostReactionByID)
+	pr.GET("", handler.GetPostReactions)
+	pr.GET("/:reaction", handler.GetPostReactionByID)
 
-	// PATH /blog/posts/:id/reactions/restricted
+	// PATH /posts/:id/reactions/restricted
 	prAuth := pr.Group("/restricted")
 	prAuth.Use(middleware.JWTWithConfig(jwtConfig))
-	prAuth.POST("/create", handler.CreateBlogReaction)
-	prAuth.PUT("/:reaction/update", handler.UpdateBlogReaction)
-	prAuth.DELETE("/:reaction/delete", handler.DeleteBlogReaction)
+	prAuth.POST("/create", handler.CreateReaction)
+	prAuth.PUT("/:reaction/update", handler.UpdateReaction)
+	prAuth.DELETE("/:reaction/delete", handler.DeleteReaction)
 
-	// PATH /blog/posts/articles
+	// PATH /posts/articles
 	a := p.Group("/articles")
 	a.GET("/public", handler.GetPublicArticles)
 	a.GET("/public/:id", handler.GetPublicArticleByID)
@@ -127,7 +120,7 @@ func main() {
 	aAuth.PUT("/:id/update", handler.UpdateArticle)
 	aAuth.PUT("/:id/transfer", handler.TransferArticle)
 
-	// PATH /blog/posts/galleries
+	// PATH /posts/galleries
 	g := p.Group("/galleries")
 	g.GET("/public", handler.GetPublicGalleries)
 	g.GET("/public/:id", handler.GetPublicGalleryByID)
@@ -140,7 +133,7 @@ func main() {
 	gAuth.PUT("/:id/update", handler.UpdateGallery)
 	gAuth.PUT("/:id/transfer", handler.TransferGallery)
 
-	// PATH /blog/posts/flickers
+	// PATH /posts/flickers
 	f := p.Group("/flickers")
 	f.GET("/public", handler.GetPublicFlickers)
 	f.GET("/public/:id", handler.GetPublicFlickerByID)
@@ -152,32 +145,6 @@ func main() {
 	fAuth.POST("/create", handler.CreateFlicker)
 	fAuth.PUT("/:id/update", handler.UpdateFlicker)
 	fAuth.PUT("/:id/transfer", handler.TransferFlicker)
-
-	// PATH /forum
-	// forum := e.Group("/forum")
-
-	// PATH /forum/questions
-	// q := forum.Group("/questions")
-	// q.GET("", handler.GetQuestions)
-	// q.GET("/:id", handler.GetQuestionByID)
-
-	// qAuth := q.Group("/restricted")
-	// qAuth.Use(middleware.JWTWithConfig(jwtConfig))
-	// qAuth.POST("/create", handler.CreateQuestion)
-	// qAuth.PUT("/:id/update", handler.UpdateQuestion)
-	// qAuth.DELETE("/:id/delete", handler.DeleteQuestion)
-
-	// PATH /forum/responses
-	// r := q.Group("/:id/responses")
-	// r.GET("", handler.GetQuestionResponses)
-	// r.GET(":id", handler.GetPostResponseByID)
-
-	// rAuth := r.Group("/restricted")
-	// rAuth.Use(middleware.JWTWithConfig(jwtConfig))
-	// rAuth.POST("/create", handler.CreateQuestionResponse)
-	// rAuth.PUT("/select", handler.SelectQuestionResponse)
-	// rAuth.PUT("/:id/update", handler.UpdateQuestionResponse)
-	// rAuth.DELETE("/:id/delete", handler.DeleteQuestionResponse)
 
 	e.HTTPErrorHandler = func(err error, c echo.Context) {
 		code := http.StatusInternalServerError

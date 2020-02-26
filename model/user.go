@@ -174,7 +174,7 @@ func (u *User) TryAuth() (int, error) {
 
 // ReadAllUsers fetches all Users
 func ReadAllUsers() ([]User, int, error) {
-	users := []User{}
+	var users []User
 	if err := db.DB.Set("gorm:auto_preload", true).Find(&users).Error; gorm.IsRecordNotFoundError(err) {
 		return users, http.StatusNotFound, err
 	}
@@ -185,7 +185,7 @@ func ReadAllUsers() ([]User, int, error) {
 // CountUsers counts specified type of users
 func CountUsers(u *User) (int, int, error) {
 	var count int
-	users := []User{}
+	var users []User
 	if err := db.DB.Where(u).Find(&users).Count(&count).Error; err != nil {
 		return count, http.StatusOK, err
 	}

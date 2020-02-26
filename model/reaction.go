@@ -25,7 +25,6 @@ type Reaction struct {
 	Type ReactionType `json:"type"`
 	User uuid.UUID    `gorm:"type:uuid" json:"user"`
 	Item uuid.UUID    `gorm:"type:uuid" json:"item"`
-	Site string       `json:"site"`
 	Text string       `json:"text"`
 }
 
@@ -81,7 +80,7 @@ func (r *Reaction) Delete() (int, error) {
 
 // ReadAllReactions fetches all Reactions
 func ReadAllReactions() ([]Reaction, int, error) {
-	reactions := []Reaction{}
+	var reactions []Reaction
 	if err := db.DB.Find(&reactions).Error; gorm.IsRecordNotFoundError(err) {
 		return reactions, http.StatusNotFound, err
 	}

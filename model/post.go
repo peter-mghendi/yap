@@ -22,12 +22,6 @@ type Post interface {
 
 type postPattern string
 
-const (
-	articlePost postPattern = "article"
-	galleryPost postPattern = "gallery"
-	flickerPost postPattern = "flicker"
-)
-
 // PostBase is the underlying object for all post types
 type PostBase struct {
 	Base
@@ -37,7 +31,6 @@ type PostBase struct {
 	Section   string         `json:"section"`
 	Summons   int            `json:"summons"`
 	Release   bool           `json:"release"`
-	Pattern   postPattern    `json:"pattern"`
 	Creator   uuid.UUID      `json:"creator" gorm:"type:uuid"`
 	Markers   pq.StringArray `json:"markers" gorm:"type:varchar(255)[]"`
 	Reactions []Reaction     `json:"reactions,omitempty" sql:"-" gorm:"foreignkey:Post"`

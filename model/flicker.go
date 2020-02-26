@@ -23,7 +23,6 @@ func (f *Flicker) Create() (int, error) {
 			Overlay: f.Overlay,
 			Section: f.Section,
 			Creator: f.Creator,
-			Pattern: flickerPost,
 			Markers: f.Markers,
 		},
 		Content: f.Content,
@@ -127,7 +126,7 @@ func (f *Flicker) Retract() (int, error) {
 
 // ReadAllFlickers fetches all Flickers
 func ReadAllFlickers() ([]Flicker, int, error) {
-	flickers := []Flicker{}
+	var flickers []Flicker
 	if err := db.DB.Set("gorm:auto_preload", true).Find(&flickers).Error; gorm.IsRecordNotFoundError(err) {
 		return flickers, http.StatusNotFound, err
 	}

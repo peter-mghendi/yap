@@ -23,7 +23,6 @@ func (g *Gallery) Create() (int, error) {
 			Summary: g.Summary,
 			Overlay: g.Overlay,
 			Section: g.Section,
-			Pattern: galleryPost,
 			Creator: g.Creator,
 			Markers: g.Markers,
 		},
@@ -128,7 +127,7 @@ func (g *Gallery) Retract() (int, error) {
 
 // ReadAllGalleries fetches all Galleries
 func ReadAllGalleries() ([]Gallery, int, error) {
-	galleries := []Gallery{}
+	var galleries []Gallery
 	if err := db.DB.Set("gorm:auto_preload", true).Find(&galleries).Error; gorm.IsRecordNotFoundError(err) {
 		return galleries, http.StatusNotFound, err
 	}

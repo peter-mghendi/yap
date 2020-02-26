@@ -40,7 +40,7 @@ func GetPostReactions(c echo.Context) error {
 	}
 
 	reactions = util.FilterR(reactions, func(r model.Reaction) bool {
-		return (r.Site == "blog") && (r.Item == postID)
+		return r.Item == postID
 	})
 
 	resp.Status, resp.Message, resp.Reactions = true, http.StatusText(status), reactions
@@ -64,7 +64,7 @@ func GetUserReactions(c echo.Context) error {
 	}
 
 	reactions = util.FilterR(reactions, func(r model.Reaction) bool {
-		return (r.Site == "blog") && (r.User == userID)
+		return r.User == userID
 	})
 
 	resp.Status, resp.Message, resp.Reactions = true, http.StatusText(status), reactions
@@ -92,7 +92,6 @@ func GetPostReactionByID(c echo.Context) error {
 		Base: model.Base{
 			ID: reactionID,
 		},
-		Site: "blog",
 		Item: postID,
 	}
 
@@ -119,7 +118,6 @@ func CreateReaction(c echo.Context) error {
 		return c.JSON(status, resp)
 	}
 
-	reaction.Site = "blog"
 	reaction.Item = uuid.FromStringOrNil(c.Param("id"))
 	if uuid.Equal(reaction.Item, uuid.Nil) {
 		status = http.StatusBadRequest
@@ -150,7 +148,6 @@ func UpdateReaction(c echo.Context) error {
 		return c.JSON(status, resp)
 	}
 
-	reaction.Site = "blog"
 	reaction.ID = uuid.FromStringOrNil(c.Param("reaction"))
 	if uuid.Equal(reaction.ID, uuid.Nil) {
 		status = http.StatusBadRequest
@@ -191,7 +188,7 @@ func UpdateReaction(c echo.Context) error {
 func DeleteReaction(c echo.Context) error {
 	userToken := c.Get("user").(*jwt.Token)
 	claims := userToken.Claims.(*JwtCustomClaims)
-	reaction, resp, status := model.Reaction{Site: "blog"}, ReactionResponse{}, 0
+	reaction, resp, status := model.Reaction{}, ReactionResponse{}, 0
 	reaction.ID = uuid.FromStringOrNil(c.Param("reaction"))
 	if uuid.Equal(reaction.ID, uuid.Nil) {
 		status = http.StatusBadRequest

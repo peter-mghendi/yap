@@ -12,5 +12,5 @@ require (
 	github.com/mikespook/gorbac v2.1.0+incompatible
 	github.com/satori/go.uuid v1.2.0
 	github.com/xo/dburl v0.0.0-20191005012637-293c3298d6c0
-	golang.org/x/crypto v0.0.0-20210817164053-32db794688a5
+	golang.org/x/crypto v0.1.0
 )
